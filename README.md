@@ -22,15 +22,17 @@ This team is spun off from the [Modules team](https://github.com/nodejs/modules)
 
 ## Status
 
-### In Progress
+### Complete
 
 1. Finish https://github.com/nodejs/node/pull/37468 / https://github.com/nodejs/node/pull/35524, simplifying the hooks to `resolve`, `load` and `globalPreloadCode`.
-
-### Upcoming
 
 1. Refactor the internal Node ESM loader’s hooks into `resolve` and `load`. Node’s internal loader already has no-ops for `transformSource` and `getGlobalPreloadCode`, so all this really entails is merging the internal `getFormat` and `getSource` into one function `load`.
 
 1. Refactor Node’s internal ESM loader to move its exception on unknown file types from within `resolve` (on detection of unknown extensions) to within `load` (if the resolved extension has no defined translator).
+
+### In Progress
+
+### Upcoming
 
 1. Implement chaining as described in the [design](doc/design.md), where the `default<hookName>` becomes `next` and references the next registered hook in the chain.
 
