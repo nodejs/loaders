@@ -18,6 +18,8 @@
 
 * [testdouble.js](https://github.com/testdouble/testdouble.js)
 
+* [babel-register-esm](https://github.com/giltayar/babel-register-esm)
+
 ## Tracking by Other Projects
 
 * [Fastify](https://github.com/fastify/fastify/issues/2847)
