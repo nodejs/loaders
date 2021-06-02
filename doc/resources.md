@@ -18,6 +18,12 @@
 
 * [testdouble.js](https://github.com/testdouble/testdouble.js)
 
+* [ts-node](https://typestrong.org/ts-node) ([Loader-specific discussion](https://github.com/TypeStrong/ts-node/issues/1007))
+
+* [@istanbuljs/esm-loader-hook](https://github.com/istanbuljs/esm-loader-hook)
+
+* [yarn PnP](https://github.com/yarnpkg/berry/pull/2161)
+
 ## Tracking by Other Projects
 
 * [Fastify](https://github.com/fastify/fastify/issues/2847)
