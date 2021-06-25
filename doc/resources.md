@@ -14,13 +14,15 @@
 
 ## Related Projects
 
+* [@istanbuljs/esm-loader-hook](https://github.com/istanbuljs/esm-loader-hook)
+
+* [babel-register-esm](https://github.com/giltayar/babel-register-esm)
+
 * [targos/multiloader](https://github.com/targos/multiloader)
 
 * [testdouble.js](https://github.com/testdouble/testdouble.js)
 
 * [ts-node](https://typestrong.org/ts-node) ([Loader-specific discussion](https://github.com/TypeStrong/ts-node/issues/1007))
-
-* [@istanbuljs/esm-loader-hook](https://github.com/istanbuljs/esm-loader-hook)
 
 * [yarn PnP](https://github.com/yarnpkg/berry/pull/2161)
 
