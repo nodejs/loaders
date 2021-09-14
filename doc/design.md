@@ -2,13 +2,13 @@
 
 ## Hooks
 
-The [current five loader hooks](https://nodejs.org/api/esm.html#esm_loaders) (`resolve`, `getFormat`, `getSource`, `transformSource`, `getGlobalPreloadCode`) would be reduced to three:
+There are currently [three loader hooks](https://nodejs.org/api/esm.html#esm_hooks):
 
 - `resolve`: Take a specifier (the string after `from` in an `import` statement) and convert it into an URL to be loaded.
 
 - `load`: Take the resolved URL and return runnable code (JavaScript, Wasm, etc.) as well as the name of one of Node’s ESM loader’s [“translators”](https://github.com/nodejs/node/blob/master/lib/internal/modules/esm/translators.js): `commonjs`, `module`, `builtin` (a Node internal module like `fs`), `json` (with `--experimental-json-modules`) or `wasm` (with `--experimental-wasm-modules`).
 
-- `globalPreloadCode`: Define a string of JavaScript to be injected into the application global scope. This is more or less the current `getGlobalPreloadCode` hook.
+- `globalPreload`: Define a string of JavaScript to be injected into the application global scope.
 
 ## Chaining `resolve` hooks
 
@@ -135,6 +135,6 @@ If these two loaders are used together, where the `coffeescript` loader’s `nex
 
 2. The `coffeescript` loader would get that `{ source, format: undefined }` early on from its call to `next`, and set `format: 'module'` based on the `.coffee` at the end of the URL. It would also transpile the source into JavaScript. It then returns `{ format: 'module', source }` where `source` is runnable JavaScript rather than the original CoffeeScript.
 
-## Chaining `globalPreloadCode` hooks
+## Chaining `globalPreload` hooks
 
 For now, we think that this wouldn’t be chained the way `resolve` and `load` would be. This hook would just be called sequentially for each registered loader, in the same order as the loaders themselves are registered. If this is insufficient, for example for instrumentation use cases, we can discuss and potentially change this to follow the chaining style of `load`.
