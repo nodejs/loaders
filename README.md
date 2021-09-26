@@ -14,7 +14,7 @@ This team is spun off from the [Modules team](https://github.com/nodejs/modules)
 
 - [Use cases](./doc/use-cases.md)
 
-- [Design](./doc/design.md)
+- [Design](./doc/design/overview.md)
 
 - [Project board](https://github.com/nodejs/node/projects/17)
 
