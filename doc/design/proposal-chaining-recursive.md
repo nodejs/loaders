@@ -1,6 +1,6 @@
-# Proposal: Recursive
+# Chaining Hooks “Recursive” Design
 
-## Recursive `resolve`
+## Chaining `resolve` hooks
 
 Say you had a chain of three loaders:
 
@@ -97,7 +97,7 @@ export async function resolve(
 ```
 </details>
 
-## Recursive `load`
+## Chaining `load` hooks
 
 Say you had a chain of three loaders:
 

@@ -1,6 +1,6 @@
-# Proposal 2: Iterative
+# Chaining Hooks “Iterative” Design
 
-## Iterative `resolve`
+## Chaining `resolve` hooks
 
 Say you had a chain of three loaders:
 
@@ -94,7 +94,7 @@ export async function resolve(
 </details>
 
 
-## Iterative `load`
+## Chaining `load` hooks
 
 Say you had a chain of three loaders:
 
