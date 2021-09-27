@@ -1,14 +1,4 @@
-# Loaders Design
-
-## Hooks
-
-There are currently [three loader hooks](https://nodejs.org/api/esm.html#esm_hooks):
-
-- `resolve`: Take a specifier (the string after `from` in an `import` statement) and convert it into an URL to be loaded.
-
-- `load`: Take the resolved URL and return runnable code (JavaScript, Wasm, etc.) as well as the name of one of Node’s ESM loader’s [“translators”](https://github.com/nodejs/node/blob/master/lib/internal/modules/esm/translators.js): `commonjs`, `module`, `builtin` (a Node internal module like `fs`), `json` (with `--experimental-json-modules`) or `wasm` (with `--experimental-wasm-modules`).
-
-- `globalPreload`: Define a string of JavaScript to be injected into the application global scope.
+# Chaining Hooks “Recursive” Design
 
 ## Chaining `resolve` hooks
 
