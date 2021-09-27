@@ -233,12 +233,3 @@ export async function load(
 }
 ```
 </details>
-
-## Mock Loader
-
-<details>
-<summary>`mock-loader.mjs`</summary>
-
-```js
-```
-</details>

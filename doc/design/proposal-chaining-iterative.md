@@ -261,12 +261,3 @@ const babelOutputToFormat = new Map([
 ]);
 ```
 </details>
-
-## Mock Loader
-
-<details>
-<summary>`mock-loader.mjs`</summary>
-
-```js
-```
-</details>
