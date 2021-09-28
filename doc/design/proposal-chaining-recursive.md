@@ -10,7 +10,9 @@ Say you had a chain of three loaders:
 
 3. The `cache-buster` that takes the URL and adds a timestamp to the end, so like `https://unpkg.com/foo?ts=1234567890`.
 
-The hook functions nest: each one always just returns `{ [format: string,] url: string }`, and the chaining happens as a result of calling `next()`. The chain short-circuits if a hook doesn’t call `next()`. Following the pattern of `--require`:
+The hook functions nest: each one always must returns a plain object, and the chaining happens as a result of calling `next()`. A hook that fails to return triggers an exception.
+
+Following the pattern of `--require`:
 
 ```console
 node \
@@ -27,6 +29,27 @@ These would be called in the following sequence (babel-loader is called first):
 1. `https-resolver` needs output of unpkg to convert it to https
 1. `unpkg-resolver` returns the remote url
 
+Resolve hooks would have the following signature:
+
+```ts
+export async function resolve(
+	specifier: string,   // The result from the previous hook
+	context: {
+	  conditions,        // export conditions (from the relevant package.json)
+	  parentUrl,         // foo.mjs imports bar.mjs
+	                     // when module is bar, parentUrl is foo.mjs
+	  originalSpecifier, // The original value of the import specifier
+	},
+	defaultResolve,      // node's default resolve hook
+): {
+	format?: string,     // a hint to the load hook (it can be ignored)
+	shortCircuit?: true, // signal to immediately terminate the `resolve` chain
+	url: string,         // the final hook must return a valid URL string
+} {
+```
+
+A hook including `shortCircuit: true` will cause the chain to short-circuit, immediately terminating the hook's chain (no subsequent `resolve` hooks are called).
+
 ### `cache-buster` resolver
 
 <details>
@@ -39,14 +62,14 @@ export async function resolve(
   next, // https-resolver
 ) {
   const result = await next(specifier, context);
-  
+
   const url = new URL(result.url); // this can throw, so handle appropriately
-  
+
   if (supportsQueryString(url.protocol)) { // exclude data: & friends
     url.searchParams.set('ts', Date.now());
     result.url = url.href;
   }
-  
+
   return result;
 }
 ```
@@ -64,9 +87,9 @@ export async function resolve(
   next, // unpkg-resolver
 ) {
   const result = await next(specifier, context);
-  
+
   const url = new URL(result.url); // this can throw, so handle appropriately
-  
+
   if (url.protocol = 'http:') {
     url.protocol = 'https:';
     result.url = url.href;
@@ -120,9 +143,28 @@ These would be called in the following sequence (babel-loader is called first):
 1. `coffeescript-loader` needs the raw source (the output of `defaultLoad` / `https-loader`) to transform coffeescript files to regular javascript
 1. `defaultLoad` / `https-loader` returns the actual, raw source
 
-The below examples are not exhaustive and provide only the gist of what each loader needs to do and how it interacts with the others.
+Load hooks would have the following signature:
 
-Any loader that neglects to call `next` causes a short-circuit.
+```ts
+export async function load(
+	resolvedUrl: string,       // the url to which the resolve hook chain settled
+	context: {
+	  conditions = string[],   // export conditions of the relevant package.json
+	  parentUrl = null,        // foo.mjs imports bar.mjs
+	                           // when module is bar, parentUrl is foo.mjs
+	  resolvedFormat?: string, // the value if resolve settled with a `format`
+	},
+	next: function,            // the "next" hook in the chain
+): {
+	format: string,            // the final hook must return one node understands
+	shortCircuit?: true,       // immediately terminate the `load` chain
+	source: string | ArrayBuffer | TypedArray,
+} {
+```
+
+A hook including `shortCircuit: true` will cause the chain to short-circuit, immediately terminating the hook's chain (no subsequent `load` hooks are called).
+
+The below examples are not exhaustive and provide only the gist of what each loader needs to do and how it interacts with the others.
 
 ### `babel` loader
 
@@ -175,7 +217,7 @@ export async function load(
   next, // https-loader ← defaultLoader
 ) {
   if (!coffeescriptExtensionsRgx.test(url)) return next(url, context, defaultLoad);
-  
+
   const format = await getPackageType(url);
   if (format === 'commonjs') return { format };
 
@@ -217,7 +259,7 @@ export async function load(
   next, // defaultLoader
 ) {
   if (!url.startsWith('https://')) return next(url, context);
-  
+
   return new Promise(function loadHttpsSource(resolve, reject) {
     get(url, function getHttpsSource(rsp) {
       // Determine the format from the MIME type of the response
