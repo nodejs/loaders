@@ -4,6 +4,8 @@ There are currently [three loader hooks](https://github.com/nodejs/node/tree/mas
 
 1. `resolve`: Takes a specifier (the string after `from` in an `import` statement) and converts it into an URL to be loaded.
 
+1. `loadManifest`: Takes the resolved URL and returns the `package.json` from the location (or `null` if it doesn't exist).
+
 1. `load`: Takes the resolved URL and returns runnable code (JavaScript, Wasm, etc.) as well as the name of one of Node’s ESM loader’s [“translators”](https://github.com/nodejs/node/blob/master/lib/internal/modules/esm/translators.js):
    * `commonjs`
    * `module`

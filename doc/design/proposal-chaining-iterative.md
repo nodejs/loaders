@@ -282,3 +282,55 @@ const babelOutputToFormat = new Map([
 ]);
 ```
 </details>
+
+## Chaining `loadManifest` hooks
+
+Say you had a chain of three loaders:
+
+* `zip` adds a virtual filesystem layer for in-zip access
+* `tgz` does the same but for tgz archives
+* `warc` does the same for warc archives.
+
+Following the pattern of `--require`:
+
+```console
+node \
+  --loader zip \
+  --loader tgz \
+  --loader warc
+```
+
+These would be called in the following sequence:
+
+(`zip` OR `defaultLoadManifest`) → `tgz` → `warc`
+
+1. `defaultLoadManifest` / `zip` needs to be first to know whether the manifest exists on the actual filesystem, which is fed to the subsequent loader
+1. `tgz` receives the raw source from the previous loader and, if necessary, checks for the manifest existence via its own rules
+1. `warc` does the same thing
+
+LoadManifest hooks would have the following signature:
+
+```ts
+export async function loadManifest(
+  manifestUrl: string,         // A URL that may or may not point to an existing
+                               // location
+  interimResult: {             // result from the previous hook
+    manifest: string | ArrayBuffer | TypedArray | null, // The content of the
+                               // manifest, or `null` if it doesn't exist.
+  },
+  context: {
+    conditions = string[],     // Export conditions of the relevant package.json
+    parentUrl = null,          // The module importing this one, or null if
+                               // this is the Node entry point
+  },
+  defaultLoadManifest: function, // Node's default load hook
+): {
+  signals?: {                  // Signals from this hook to the ESMLoader
+    contextOverride?: object,  // A new `context` argument for the next hook
+    interimIgnored?: true,     // interimResult was intentionally ignored
+    shortCircuit?: true,       // `resolve` chain should be terminated
+  },
+  manifest: string | ArrayBuffer | TypedArray | null, // The content of the
+                             // manifest, or `null` if it doesn't exist.
+} {
+```

@@ -263,3 +263,44 @@ export async function load(
 }
 ```
 </details>
+
+## Chaining `loadManifest` hooks
+
+Say you had a chain of three loaders:
+
+* `zip` adds a virtual filesystem layer for in-zip access
+* `tgz` does the same but for tgz archives
+* `warc` does the same for warc archives.
+
+Following the pattern of `--require`:
+
+```console
+node \
+  --loader zip \
+  --loader tgz \
+  --loader warc
+```
+
+These would be called in the following sequence: `zip` calls `tgz`, which calls `warc`. Or in JavaScript terms, `zip(tgz(warc(input)))`:
+
+Load hooks would have the following signature:
+
+```ts
+export async function loadManifest(
+  manifestUrl: string,       // A URL that may or may not point to an existing
+                             // location
+  context: {
+    conditions = string[],   // Export conditions of the relevant `package.json`
+    parentUrl = null,        // The module importing this one, or null if
+                             // this is the Node entry point
+  },
+  next: function,            // The subsequent `loadManifest` hook in the chain,
+                             // or Node’s default `loadManifest` hook after the
+                             // last user-supplied `loadManifest` hook
+): {
+  manifest: string | ArrayBuffer | TypedArray | null, // The content of the
+                             // manifest, or `null` if it doesn't exist.
+  shortCircuit?: true,       // A signal that this hook intends to terminate
+                             // the chain of `load` hooks
+} {
+```
