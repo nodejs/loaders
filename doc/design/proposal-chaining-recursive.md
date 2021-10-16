@@ -21,7 +21,7 @@ node \
 --loader cache-buster-resolver
 ```
 
-These would be called in the following sequence (babel-loader is called first):
+These would be called in the following sequence (cache-buster is called first):
 
 `cache-buster-resolver` ← `https-resolver` ← `unpkg-resolver`
 
@@ -29,22 +29,27 @@ These would be called in the following sequence (babel-loader is called first):
 1. `https-resolver` needs output of unpkg to convert it to https
 1. `unpkg-resolver` returns the remote url
 
+So in JavaScript terms, `cacheBuster(httpToHttps(unpkg(input)))`.
+
 Resolve hooks would have the following signature:
 
 ```ts
 export async function resolve(
-	specifier: string,   // The result from the previous hook
+	specifier: string,         // The original specifier
 	context: {
-	  conditions,        // export conditions (from the relevant package.json)
-	  parentUrl,         // foo.mjs imports bar.mjs
-	                     // when module is bar, parentUrl is foo.mjs
-	  originalSpecifier, // The original value of the import specifier
+		conditions = string[],   // export conditions of the relevant package.json
+		parentUrl = null,        // foo.mjs imports bar.mjs
+		                         // when module is bar, parentUrl is foo.mjs
+		                         // when module is bar.mjs, parentUrl is foo.mjs
 	},
-	defaultResolve,      // node's default resolve hook
+	next: function,            // the subsequent resolve hook in the chain (or,
+	                           // node's defaultResolve if the hook is the final
+	                           // supplied by the user)
 ): {
-	format?: string,     // a hint to the load hook (it can be ignored)
-	shortCircuit?: true, // signal to immediately terminate the `resolve` chain
-	url: string,         // the final hook must return a valid URL string
+	format?: string,           // a hint to the load hook (it can be ignored)
+	shortCircuit?: true,       // signal that this hook intends to terminate the
+	                           // `resolve` chain
+	url: string,               // the final hook must return a valid URL string
 } {
 ```
 
@@ -57,21 +62,23 @@ A hook including `shortCircuit: true` will cause the chain to short-circuit, imm
 
 ```js
 export async function resolve(
-  specifier,
-  context,
-  next, // https-resolver
+	specifier,
+	context,
+	next, // https' resolve
 ) {
-  const result = await next(specifier, context);
+	const result = await next(specifier, context);
 
-  const url = new URL(result.url); // this can throw, so handle appropriately
+	const url = new URL(result.url); // this can throw, so handle appropriately
 
-  if (supportsQueryString(url.protocol)) { // exclude data: & friends
-    url.searchParams.set('ts', Date.now());
-    result.url = url.href;
-  }
+	if (supportsQueryString(url.protocol)) { // exclude data: & friends
+		url.searchParams.set('ts', Date.now());
+		result.url = url.href;
+	}
 
-  return result;
+	return result;
 }
+
+function supportsQueryString(/* … */) {/* … */}
 ```
 </details>
 
@@ -82,20 +89,20 @@ export async function resolve(
 
 ```js
 export async function resolve(
-  specifier,
-  context,
-  next, // unpkg-resolver
+	specifier,
+	context,
+	next, // unpkg's resolve
 ) {
-  const result = await next(specifier, context);
+	const result = await next(specifier, context);
 
-  const url = new URL(result.url); // this can throw, so handle appropriately
+	const url = new URL(result.url); // this can throw, so handle appropriately
 
-  if (url.protocol = 'http:') {
-    url.protocol = 'https:';
-    result.url = url.href;
-  }
+	if (url.protocol = 'http:') {
+		url.protocol = 'https:';
+		result.url = url.href;
+	}
 
-  return result;
+	return result;
 }
 ```
 </details>
@@ -107,15 +114,15 @@ export async function resolve(
 
 ```js
 export async function resolve(
-  specifier,
-  context,
-  next, // Node's defaultResolve
+	specifier,
+	context,
+	next, // Node's defaultResolve
 ) {
-  if (isBareSpecifier(specifier)) {
-    return `http://unpkg.com/${specifier}`;
-  }
+	if (isBareSpecifier(specifier)) {
+		return `http://unpkg.com/${specifier}`;
+	}
 
-  return next(specifier, context);
+	return next(specifier, context);
 }
 ```
 </details>
@@ -143,21 +150,26 @@ These would be called in the following sequence (babel-loader is called first):
 1. `coffeescript-loader` needs the raw source (the output of `defaultLoad` / `https-loader`) to transform coffeescript files to regular javascript
 1. `defaultLoad` / `https-loader` returns the actual, raw source
 
+So in JavaScript terms, `babel(coffeescript(https(input)))`.
+
 Load hooks would have the following signature:
 
 ```ts
 export async function load(
 	resolvedUrl: string,       // the url to which the resolve hook chain settled
 	context: {
-	  conditions = string[],   // export conditions of the relevant package.json
-	  parentUrl = null,        // foo.mjs imports bar.mjs
-	                           // when module is bar, parentUrl is foo.mjs
-	  resolvedFormat?: string, // the value if resolve settled with a `format`
+		conditions = string[],   // export conditions of the relevant package.json
+		parentUrl = null,        // foo.mjs imports bar.mjs
+		                         // when module is bar, parentUrl is foo.mjs
+		resolvedFormat?: string, // the value if resolve settled with a `format`
 	},
-	next: function,            // the "next" hook in the chain
+	next: function,            // the subsequent load hook in the chain (or,
+	                           // node's defaultLoad if the hook is the final
+	                           // supplied by the user)
 ): {
 	format: string,            // the final hook must return one node understands
-	shortCircuit?: true,       // immediately terminate the `load` chain
+	shortCircuit?: true,       // signal that this hook intends to terminate the
+	                           // `load` chain
 	source: string | ArrayBuffer | TypedArray,
 } {
 ```
@@ -177,7 +189,7 @@ export async function resolve(/* … */) {/* … */ }
 export async function load(
 	url,
 	context,
-	next, // coffeescript ← https-loader ← defaultLoader
+	next, // coffeescript's load ← https' load ← node's defaultLoad
 ) {
 	const babelConfig = await getBabelConfig(url);
 
@@ -212,25 +224,25 @@ const babelOutputToFormat = new Map([
 export async function resolve(/* … */) {/* … */}
 
 export async function load(
-  url,
-  context,
-  next, // https-loader ← defaultLoader
+	url,
+	context,
+	next, // https' load ← node's defaultLoad
 ) {
-  if (!coffeescriptExtensionsRgx.test(url)) return next(url, context, defaultLoad);
+	if (!coffeescriptExtensionsRgx.test(url)) return next(url, context, defaultLoad);
 
-  const format = await getPackageType(url);
-  if (format === 'commonjs') return { format };
+	const format = await getPackageType(url);
+	if (format === 'commonjs') return { format };
 
-  const { source: rawSource } = await next(url, { ...context, format });
-  const transformedSource = CoffeeScript.compile(rawSource.toString(), {
-    bare: true,
-    filename: url,
-  });
+	const { source: rawSource } = await next(url, { ...context, format });
+	const transformedSource = CoffeeScript.compile(rawSource.toString(), {
+		bare: true,
+		filename: url,
+	});
 
-  return {
-    format,
-    source: transformedSource,
-  };
+	return {
+		format,
+		source: transformedSource,
+	};
 }
 
 function getPackageType(url) {/* … */}
@@ -247,31 +259,31 @@ const coffeescriptExtensionsRgs = /* … */
 import { get } from 'https';
 
 const mimeTypeToFormat = new Map([
-  ['application/node', 'commonjs'],
-  ['application/javascript', 'module'],
-  ['application/json', 'json'],
-  // …
+	['application/node', 'commonjs'],
+	['application/javascript', 'module'],
+	['application/json', 'json'],
+	// …
 ]);
 
 export async function load(
-  url,
-  context,
-  next, // defaultLoader
+	url,
+	context,
+	next, // node's defaultLoad
 ) {
-  if (!url.startsWith('https://')) return next(url, context);
+	if (!url.startsWith('https://')) return next(url, context);
 
-  return new Promise(function loadHttpsSource(resolve, reject) {
-    get(url, function getHttpsSource(rsp) {
-      // Determine the format from the MIME type of the response
-      const format = mimeTypeToFormat.get(rsp.headers['content-type']);
-      let source = '';
+	return new Promise(function loadHttpsSource(resolve, reject) {
+		get(url, function getHttpsSource(rsp) {
+			// Determine the format from the MIME type of the response
+			const format = mimeTypeToFormat.get(rsp.headers['content-type']);
+			let source = '';
 
-      rsp.on('data', (chunk) => source += chunk);
-      rsp.on('end', () => resolve({ format, source }));
-      rsp.on('error', reject);
-    })
-      .on('error', (err) => reject(err));
-  });
+			rsp.on('data', (chunk) => source += chunk);
+			rsp.on('end', () => resolve({ format, source }));
+			rsp.on('error', reject);
+		})
+			.on('error', (err) => reject(err));
+	});
 }
 ```
 </details>
