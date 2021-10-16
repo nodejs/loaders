@@ -24,20 +24,20 @@ Resolve hooks would have the following signature:
 ```ts
 export async function resolve(
 	interimResult: {          // result from the previous hook
-	  format = '',            // most recently provided value from a previous hook
-	  url = '',               // most recently provided value from a previous hook
+		format = '',            // most recently provided value from a previous hook
+		url = '',               // most recently provided value from a previous hook
 	},
 	context: {
-	  conditions = string[], // export conditions from the relevant package.json
-	  parentUrl = null,      // foo.mjs imports bar.mjs
-	                         // when module is bar, parentUrl is foo.mjs
-	  originalSpecifier,     // The original value of the import specifier
+		conditions = string[], // export conditions from the relevant package.json
+		parentUrl = null,      // foo.mjs imports bar.mjs
+		                       // when module is bar.mjs, parentUrl is foo.mjs
+		originalSpecifier,     // The original value of the import specifier
 	},
 	defaultResolve,          // node's default resolve hook
 ): {
 	format?: string,         // a hint to the load hook (it can be ignored)
-	shortCircuit?: true,     // immediately terminate the `resolve` chain
-
+	shortCircuit?: true,     // signal that this hook intends to terminate the
+	                         // `resolve` chain
 	url: string,             // the final hook must return a valid URL string
 } {
 ```
@@ -51,10 +51,10 @@ A hook including `shortCircuit: true` will cause the chain to short-circuit, imm
 
 ```js
 export async function resolve(
-  interimResult,
-  { originalSpecifier },
+	interimResult,
+	{ originalSpecifier },
 ) {
-  if (isBareSpecifier(originalSpecifier)) return `http://unpkg.com/${originalSpecifier}`;
+	if (isBareSpecifier(originalSpecifier)) return `http://unpkg.com/${originalSpecifier}`;
 }
 ```
 </details>
@@ -66,14 +66,14 @@ export async function resolve(
 
 ```js
 export async function resolve(
-  interimResult,
-  context,
+	interimResult,
+	context,
 ) {
-  const url = new URL(interimResult.url); // this can throw, so handle appropriately
+	const url = new URL(interimResult.url); // this can throw, so handle appropriately
 
-  if (url.protocol = 'http:') url.protocol = 'https:';
+	if (url.protocol = 'http:') url.protocol = 'https:';
 
-  return { url: url.toString() };
+	return { url: url.toString() };
 }
 ```
 </details>
@@ -129,20 +129,21 @@ Load hooks would have the following signature:
 ```js
 export async function load(
 	interimResult: {     // result from the previous hook
-	  format = '',       // the value if resolve settled with a `format`
-	                     // until a load hook provides a different value
-	  source = '',       //
+		format = '',       // the value if resolve settled with a `format`
+		                   // until a load hook provides a different value
+		source = '',       //
 	},
 	context: {
-	  conditions,        // export conditions from the relevant package.json
-	  parentUrl,         // foo.mjs imports bar.mjs
-	                     // when module is bar, parentUrl is foo.mjs
-	  resolvedUrl,       // the url to which the resolve hook chain settled
+		conditions,        // export conditions from the relevant package.json
+		parentUrl,         // foo.mjs imports bar.mjs
+		                   // when module is bar, parentUrl is foo.mjs
+		resolvedUrl,       // the url to which the resolve hook chain settled
 	},
 	defaultLoad,         // node's default load hook
 ): {
 	format: string,      // the final hook must return one node understands
-	shortCircuit?: true, // signal to immediately terminate the `load` chain
+	shortCircuit?: true, // signal that this hook intends to terminate the `load`
+	                     // chain
 	source: string | ArrayBuffer | TypedArray,
 } {
 ```
