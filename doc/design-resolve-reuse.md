@@ -192,3 +192,78 @@ export function findPackageJson(
   isDirectory: IsDirectory
 ): readonly [packageJSONUrl: URL, packageJSONPath: string] | undefined;
 ```
+
+The implementation of a `PackageResolve` function in appliation code could look like this. Note that the resolve can be ambigous in that an array of multiple possible URLs is returned. This is becuase the `legacyMainResolve` is ambigous and is avoiding file system access by returning all possibilites rather than looking in the file system for what exists. The application is left to sort out which possibility is the right one with it's own logic.
+
+```ts
+import * as rua from "utility-functions-from-above";
+
+/**
+ * This function resolves bare specifiers that refers to packages (not node:, data: bare specifiers)
+ */
+function packageResolve(
+  specifier: string,
+  base: string | URL | undefined,
+  conditions: ReadonlySet<string>,
+  isDirectory: IsDirectory,
+  readFile: ReadFile
+): ReadonlyArray<URL> {
+  // Parse the specifier as a package name (package or @org/package) and separate out the sub-path
+  const { packageName, packageSubpath, isScoped } = rua.parsePackageName(
+    specifier,
+    base
+  );
+
+  // ResolveSelf
+  // Check if the specifier resolves to the same package we are resolving from
+  const selfResolved = rua.resolveSelf(
+    packageResolve,
+    base,
+    packageName,
+    packageSubpath,
+    conditions,
+    readFile
+  );
+  if (selfResolved) {
+    return [selfResolved];
+  }
+
+  // Find package.json by ascending the file system
+  const packageJsonMatch = rua.findPackageJson(
+    packageName,
+    base,
+    isScoped,
+    isDirectory
+  );
+
+  // If package.json was found, resolve from it's exports or main field
+  if (packageJsonMatch) {
+    const [packageJSONUrl, packageJSONPath] = packageJsonMatch;
+    const packageConfig = rua.getPackageConfig(
+      readFile,
+      packageJSONPath,
+      specifier,
+      base
+    );
+    if (packageConfig.exports !== undefined && packageConfig.exports !== null) {
+      const per = rua.packageExportsResolve(
+        packageResolve,
+        packageJSONUrl,
+        packageSubpath,
+        packageConfig,
+        base,
+        conditions
+      ).resolved;
+      return [per];
+    }
+    debug("packageSubpath", packageSubpath);
+    if (packageSubpath === ".") {
+      // return legacyMainResolve(packageJSONUrl, packageConfig, base);
+      return rua.legacyMainResolve2(packageJSONUrl, packageConfig);
+    }
+    return [new URL(packageSubpath, packageJSONUrl)];
+  }
+
+  return [];
+}
+```
