@@ -193,10 +193,53 @@ export function findPackageJson(
 ): readonly [packageJSONUrl: URL, packageJSONPath: string] | undefined;
 ```
 
-The implementation of a `PackageResolve` function in appliation code could look like this. Note that the resolve can be ambigous in that an array of multiple possible URLs is returned. This is becuase the `legacyMainResolve` is ambigous and is avoiding file system access by returning all possibilites rather than looking in the file system for what exists. The application is left to sort out which possibility is the right one with it's own logic.
+### Example of using utility functions to resolve
+
+Note that the resolve from the `packageResolve` function can be ambigous in that an array of multiple possible URLs is returned. This is becuase the `legacyMainResolve` is ambigous and is avoiding file system access by returning all possibilites rather than looking in the file system for what exists. The application is left to sort out which possibility is the right one with it's own logic.
 
 ```ts
 import * as rua from "utility-functions-from-above";
+
+function startResolve(
+  specifier: string,
+  base: string | undefined,
+  conditions: ReadonlySet<string>,
+  isDirectory: IsDirectory,
+  readFile: ReadFile
+): ResolveReturn | undefined {
+  // Resolve path specifiers
+  if (rua.shouldBeTreatedAsRelativeOrAbsolutePath(specifier)) {
+    // Application specific logic to resolve path specifiers
+    return appliationLogicToResolvePathSpecifiers();
+  }
+
+  // Resolve bare specifiers
+  let possibleUrls: ReadonlyArray<URL> = [];
+  if (specifier.startsWith("#")) {
+    // Use utility function to resolve
+    const { resolved } = rua.packageImportsResolve(
+      packageResolve,
+      specifier,
+      base,
+      conditions,
+      readFile
+    )!;
+    possibleUrls = [resolved];
+  } else {
+    // Use application specific packageResolve() specified below
+    possibleUrls = packageResolve(
+      specifier,
+      base,
+      conditions,
+      isDirectory,
+      readFile
+    );
+  }
+
+  // At this point the bare specifier is resolved to one or more possible files
+  // Use application specific logic to determine which one to use (or return undefined if none exists)
+  return applicationLogicToSortOutWhichUrlToUse();
+}
 
 /**
  * This function resolves bare specifiers that refers to packages (not node:, data: bare specifiers)
