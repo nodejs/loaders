@@ -160,9 +160,7 @@ export function getConditionsSet(
 
 export function shouldBeTreatedAsRelativeOrAbsolutePath(
   specifier: string
-): boolean {
-  return ru.shouldBeTreatedAsRelativeOrAbsolutePath(specifier);
-}
+): boolean;
 
 export function parsePackageName(
   specifier: string,
