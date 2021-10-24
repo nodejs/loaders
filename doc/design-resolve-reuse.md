@@ -203,10 +203,13 @@ import * as rua from "utility-functions-from-above";
 function startResolve(
   specifier: string,
   base: string | undefined,
-  conditions: ReadonlySet<string>,
+  conditionsArray: ReadonlyArray<string>,
   isDirectory: IsDirectory,
   readFile: ReadFile
 ): ResolveReturn | undefined {
+  // Convert conditions to set
+  const conditions = rua.getConditionsSet(conditionsArray);
+
   // Resolve path specifiers
   if (rua.shouldBeTreatedAsRelativeOrAbsolutePath(specifier)) {
     // Application specific logic to resolve path specifiers
