@@ -302,7 +302,6 @@ function packageResolve(
       ).resolved;
       return [per];
     }
-    debug("packageSubpath", packageSubpath);
     if (packageSubpath === ".") {
       return rua.legacyMainResolve(packageJSONUrl, packageConfig);
     }
