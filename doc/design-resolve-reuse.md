@@ -95,3 +95,102 @@ Specifically we could refactor `resolve.js` so that `packageExportsResolve` and 
 If the loader should provide its own `packageResolve` it could be useful to break out some parts of the default implementation. Eg. the part that finds package.json by ascending the file system and the part that checks for self resolve within the current package. The self-resolve part does not do any filesystem access so it could perhaps be moved so it does not have to be part of the `packageResolve` that the loader provides.
 
 Using this strategy the utility functions exported would be free of filesystem side-effects and the loader would do any such effects needed itself. So this would be akin to a [functional-core-imperative-shell](https://www.destroyallsoftware.com/screencasts/catalog/functional-core-imperative-shell) stratgegy. Altough the utility functions would be "pure" only in the sense that they do no filesystem side-effects or throw exceptions. Although the utility functions cannot be made 100% pure, they probably could be made idempotent.
+
+### Utility functions API
+
+Here is an example of how the utility API could look like. It is written in typescript notation to make the types of parameters clear. The design of this API is mainly an effect of refactoring the existing functions and may have looked different if designed from scratch.
+
+The main functions are `packageExportsResolve` and `packageImportsResolve`. Both these function make use of a function of type `PackageResolve` that is provided by the calling application. The `PackageResolve` function is also the main function to start the resolve, and then it calls into the utility functions which may call back into the `PackageResolve` function. This is becuase of the recursive nature of the resolve, eg. an export/import can be a package name that has to be resolved.
+
+```ts
+/**
+ * This needs to be implemented by the caller
+ */
+type PackageResolve = (
+  specifier: string,
+  base: string | URL | undefined,
+  conditions: ReadonlySet<string>,
+  isDirectory: IsDirectory,
+  readFile: ReadFile
+) => ReadonlyArray<URL>;
+
+export type IsDirectory = (path: string) => boolean;
+export type ReadFile = (filename: string) => string | undefined;
+
+/**
+ * Relevant parts of package.json
+ */
+type PackageConfig = {
+  readonly pjsonPath: string;
+  readonly exists: boolean;
+  readonly main: string | undefined;
+  readonly name: string | undefined;
+  readonly type: string;
+  readonly exports: unknown | undefined;
+  readonly imports: unknown | undefined;
+};
+
+export function packageExportsResolve(
+  packageResolve: PackageResolve,
+  packageJSONUrl: URL,
+  packageSubpath: string,
+  packageConfig: PackageConfig,
+  base: string | URL | undefined,
+  conditions: ReadonlySet<string>
+): { readonly resolved: URL; readonly exact: boolean };
+
+export function packageImportsResolve(
+  packageResolve: PackageResolve,
+  name: string,
+  base: string | undefined,
+  conditions: ReadonlySet<string>,
+  readFile: ReadFile
+): { readonly resolved: URL; readonly exact: boolean };
+
+export function getPackageConfig(
+  readFile: ReadFile,
+  path: string,
+  specifier: string,
+  base: string | URL | undefined
+): PackageConfig;
+
+export function getConditionsSet(
+  conditions: ReadonlyArray<string>
+): ReadonlySet<string>;
+
+export function shouldBeTreatedAsRelativeOrAbsolutePath(
+  specifier: string
+): boolean {
+  return ru.shouldBeTreatedAsRelativeOrAbsolutePath(specifier);
+}
+
+export function parsePackageName(
+  specifier: string,
+  base: string | URL | undefined
+): {
+  readonly packageName: string;
+  readonly packageSubpath: string;
+  readonly isScoped: boolean;
+};
+
+export function legacyMainResolve(
+  packageJSONUrl: string | URL,
+  packageConfig: PackageConfig
+): ReadonlyArray<URL>;
+
+export function resolveSelf(
+  packageResolve: PackageResolve,
+  base: string | URL | undefined,
+  packageName: string,
+  packageSubpath: string,
+  conditions: ReadonlySet<string>,
+  readFile: ReadFile
+): URL;
+
+export function findPackageJson(
+  packageName: string,
+  base: string | URL | undefined,
+  isScoped: boolean,
+  isDirectory: IsDirectory
+): readonly [packageJSONUrl: URL, packageJSONPath: string] | undefined;
+```
