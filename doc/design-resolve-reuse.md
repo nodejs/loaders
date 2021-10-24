@@ -258,8 +258,7 @@ function packageResolve(
     }
     debug("packageSubpath", packageSubpath);
     if (packageSubpath === ".") {
-      // return legacyMainResolve(packageJSONUrl, packageConfig, base);
-      return rua.legacyMainResolve2(packageJSONUrl, packageConfig);
+      return rua.legacyMainResolve(packageJSONUrl, packageConfig);
     }
     return [new URL(packageSubpath, packageJSONUrl)];
   }
