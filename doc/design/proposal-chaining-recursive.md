@@ -47,7 +47,7 @@ export async function resolve(
 } {
 ```
 
-A hook including `shortCircuit: true` will cause the chain to short-circuit, immediately terminating the hook's chain (no subsequent `resolve` hooks are called).
+A hook including `shortCircuit: true` will allow the chain to short-circuit, immediately terminating the hook's chain (no subsequent `resolve` hooks are called). The chain would naturally short-circuit if `next()` is not called, but that can lead to unexpected results that are often difficult to troubleshoot, so an error is thrown if both `next()` is not called and `shortCircuit` is not set.
 
 ### `cache-buster` resolver
 
@@ -166,7 +166,7 @@ export async function load(
 } {
 ```
 
-A hook including `shortCircuit: true` will cause the chain to short-circuit, immediately terminating the hook's chain (no subsequent `load` hooks are called).
+A hook including `shortCircuit: true` will allow the chain to short-circuit, immediately terminating the hook's chain (no subsequent `load` hooks are called). The chain would naturally short-circuit if `next()` is not called, but that can lead to unexpected results that are often difficult to troubleshoot, so an error is thrown if both `next()` is not called and `shortCircuit` is not set.
 
 The below examples are not exhaustive and provide only the gist of what each loader needs to do and how it interacts with the others.
 
