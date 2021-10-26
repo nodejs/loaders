@@ -204,7 +204,7 @@ export function resolve(
   // Let node handle `data:` and `node:` prefix etc.
   const excludeRegex = /^\w+:/;
   if (excludeRegex.test(specifier)) {
-    return undefined;
+    return defaultResolve(specifier, context);
   }
 
   // Use regular filesystem
@@ -258,7 +258,7 @@ export function resolve(
     }
   }
 
-  return undefined;
+  return defaultResolve(specifier, context);
 }
 
 /**
