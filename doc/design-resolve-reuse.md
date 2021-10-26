@@ -11,7 +11,7 @@ Typescript files import from the future output so the imported file may not exis
 
 In other cases where larger alterations of the algorithm is desired it still might be useful to call into parts of the default algorithm(?).
 
-# Analysis of current file system access in defaultResolve
+## Analysis of current file system access in defaultResolve
 
 The default resolve algorithm is implemented in [resolve.js](https://github.com/nodejs/node/blob/master/lib/internal/modules/esm/resolve.js).
 
@@ -80,13 +80,7 @@ The analysis shows that filesystem access occurs mainly as an effect of calls to
   - moduleResolve
     - defaultResolve
 
-# Stragegies for re-use of defaultResolve
-
-## Filesystem hooks
-
-Using this strategy, the loader would provide hooks for filesystem calls, specifically hooks corresponding to `realpathSync`, `statSync` and `packageJsonReader.read`.
-
-## Utility functions
+## Re-use of defaultResolve as utility functions
 
 This strategy would export utility functions so a custom loader could pick which parts of the default algorithm's logic it wants to call. If utility functions are exported, they probably should not do any filesystem access or throw exceptions (but instead return a value indicating success/fail).
 
@@ -96,7 +90,7 @@ If the loader should provide its own `packageResolve` it could be useful to brea
 
 Using this strategy the utility functions exported would be free of filesystem side-effects and the loader would do any such effects needed itself. So this would be akin to a [functional-core-imperative-shell](https://www.destroyallsoftware.com/screencasts/catalog/functional-core-imperative-shell) stratgegy. Altough the utility functions would be "pure" only in the sense that they do no filesystem side-effects or throw exceptions. Although the utility functions cannot be made 100% pure, they probably could be made idempotent.
 
-### Utility functions API
+## Utility functions API
 
 Here is an example of how the utility API could look like. It is written in typescript notation to make the types of parameters clear. The design of this API is mainly an effect of refactoring the existing functions and may have looked different if designed from scratch.
 
@@ -193,7 +187,7 @@ export function findPackageJson(
 ): readonly [packageJSONUrl: URL, packageJSONPath: string] | undefined;
 ```
 
-### Example of using utility functions to resolve
+## Example of using utility functions to resolve
 
 Note that the resolve from the `packageResolve` function can be ambigous in that an array of multiple possible URLs is returned. This is becuase the `legacyMainResolve` is ambigous and is avoiding file system access by returning all possibilites rather than looking in the file system for what exists. The application is left to sort out which possibility is the right one with it's own logic.
 
@@ -312,7 +306,7 @@ function packageResolve(
 }
 ```
 
-### Suggestions for refactoring of the API functions
+## Suggestions for refactoring of the API functions
 
 The API functions above are derived from the current code in [resolve.js](https://github.com/nodejs/node/blob/master/lib/internal/modules/esm/resolve.js). Here are some suggestions for refactoring to a cleaner API with some tradeoffs.
 
