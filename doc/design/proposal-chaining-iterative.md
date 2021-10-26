@@ -23,22 +23,22 @@ Resolve hooks would have the following signature:
 
 ```ts
 export async function resolve(
-	interimResult: {             // results from the previous hook
-		format = '',
-		url = '',
-	},
-	context: {
-		conditions = string[],     // export conditions of the relevant package.json
-		parentUrl = null,          // foo.mjs imports bar.mjs
-		                           // when module is bar.mjs, parentUrl is foo.mjs
-		originalSpecifier: string, // the original value of the import specifier
-	},
-	defaultResolve,              // node's default resolve hook
+  interimResult: {             // results from the previous hook
+    format = '',
+    url = '',
+  },
+  context: {
+    conditions = string[],     // export conditions of the relevant package.json
+    parentUrl = null,          // foo.mjs imports bar.mjs
+                               // when module is bar.mjs, parentUrl is foo.mjs
+    originalSpecifier: string, // the original value of the import specifier
+  },
+  defaultResolve,              // node's default resolve hook
 ): {
-	format?: string,             // a hint to the load hook (it can be ignored)
+  format?: string,             // a hint to the load hook (it can be ignored)
   signals?: {                  // signals from this hook to the ESMLoader
     contextOverride?: object,  // the new `context` argument for the next hook
-	  interimIgnored?: true,     // interimResult was intentionally ignored
+    interimIgnored?: true,     // interimResult was intentionally ignored
     shortCircuit?: true,       // `resolve` chain should be terminated
   },
   url: string,                 // the final hook must return a valid URL string
@@ -54,10 +54,10 @@ A hook including `shortCircuit: true` will cause the chain to short-circuit, imm
 
 ```js
 export async function resolve(
-	interimResult,
-	{ originalSpecifier },
+  interimResult,
+  { originalSpecifier },
 ) {
-	if (isBareSpecifier(originalSpecifier)) return `http://unpkg.com/${originalSpecifier}`;
+  if (isBareSpecifier(originalSpecifier)) return `http://unpkg.com/${originalSpecifier}`;
 }
 ```
 </details>
@@ -69,14 +69,14 @@ export async function resolve(
 
 ```js
 export async function resolve(
-	interimResult,
-	context,
+  interimResult,
+  context,
 ) {
-	const url = new URL(interimResult.url); // this can throw, so handle appropriately
+  const url = new URL(interimResult.url); // this can throw, so handle appropriately
 
-	if (url.protocol = 'http:') url.protocol = 'https:';
+  if (url.protocol = 'http:') url.protocol = 'https:';
 
-	return { url: url.toString() };
+  return { url: url.toString() };
 }
 ```
 </details>
@@ -88,15 +88,15 @@ export async function resolve(
 
 ```js
 export async function resolve(
-	interimResult,
+  interimResult,
 ) {
-	const url = new URL(interimResult.url); // this can throw, so handle appropriately
+  const url = new URL(interimResult.url); // this can throw, so handle appropriately
 
-	if (supportsQueryString(url.protocol)) { // exclude data: & friends
-		url.searchParams.set('t', Date.now());
-	}
+  if (supportsQueryString(url.protocol)) { // exclude data: & friends
+    url.searchParams.set('t', Date.now());
+  }
 
-	return { url: url.toString() };
+  return { url: url.toString() };
 }
 ```
 </details>
@@ -131,26 +131,26 @@ Load hooks would have the following signature:
 
 ```ts
 export async function load(
-	interimResult: {             // result from the previous hook
-		format = '',               // the value if `resolve` settled with a `format`
-		                           // until a load hook provides a different value
-		source = '',
-	},
-	context: {
-		conditions = string[],     // export conditions of the relevant package.json
-		parentUrl = null,          // foo.mjs imports bar.mjs
-		                           // when module is bar, parentUrl is foo.mjs
-		resolvedUrl: string,       // url to which the resolve hook chain settled
-	},
-	defaultLoad: function,       // node's default load hook
+  interimResult: {             // result from the previous hook
+    format = '',               // the value if `resolve` settled with a `format`
+                               // until a load hook provides a different value
+    source = '',
+  },
+  context: {
+    conditions = string[],     // export conditions of the relevant package.json
+    parentUrl = null,          // foo.mjs imports bar.mjs
+                               // when module is bar, parentUrl is foo.mjs
+    resolvedUrl: string,       // url to which the resolve hook chain settled
+  },
+  defaultLoad: function,       // node's default load hook
 ): {
-	format: string,              // the final hook must return any node supports
+  format: string,              // the final hook must return any node supports
   signals?: {                  // signals from this hook to the ESMLoader
     contextOverride?: object,  // the new `context` argument for the next hook
-	  interimIgnored?: true,     // interimResult was intentionally ignored
+    interimIgnored?: true,     // interimResult was intentionally ignored
     shortCircuit?: true,       // `resolve` chain should be terminated
   },
-	source: string | ArrayBuffer | TypedArray,
+  source: string | ArrayBuffer | TypedArray,
 } {
 ```
 
@@ -163,32 +163,32 @@ A hook including `shortCircuit: true` will cause the chain to short-circuit, imm
 
 ```js
 export async function load(
-	interimResult,
-	{ resolvedUrl },
+  interimResult,
+  { resolvedUrl },
 ) {
-	if (interimResult.source) return; // step aside (content already retrieved)
+  if (interimResult.source) return; // step aside (content already retrieved)
 
-	if (!resolvedUrl.startsWith('https://')) return; // step aside
+  if (!resolvedUrl.startsWith('https://')) return; // step aside
 
-	return new Promise(function loadHttpsSource(resolve, reject) {
-		get(resolvedUrl, function getHttpsSource(rsp) {
-			const format = mimeTypeToFormat.get(rsp.headers['content-type']);
-			let source = '';
+  return new Promise(function loadHttpsSource(resolve, reject) {
+    get(resolvedUrl, function getHttpsSource(rsp) {
+      const format = mimeTypeToFormat.get(rsp.headers['content-type']);
+      let source = '';
 
-			rsp.on('data', (chunk) => source += chunk);
-			rsp.on('end', () => resolve({ format, source }));
-			rsp.on('error', reject);
-		});
-	});
+      rsp.on('data', (chunk) => source += chunk);
+      rsp.on('end', () => resolve({ format, source }));
+      rsp.on('error', reject);
+    });
+  });
 }
 
 const mimeTypeToFormat = new Map([
-	['application/node', 'commonjs'],
-	['application/javascript', 'module'],
-	['text/javascript', 'module'],
-	['application/json', 'json'],
-	['text/coffeescript', 'coffeescript'],
-	// …
+  ['application/node', 'commonjs'],
+  ['application/javascript', 'module'],
+  ['text/javascript', 'module'],
+  ['application/json', 'json'],
+  ['text/coffeescript', 'coffeescript'],
+  // …
 ]);
 ```
 </details>
@@ -202,29 +202,29 @@ const mimeTypeToFormat = new Map([
 export async function resolve(/* … */) {/* … */ }
 
 export async function load(
-	interimResult, // possibly output of https-loader
-	context,
-	defaulLoad,
+  interimResult, // possibly output of https-loader
+  context,
+  defaulLoad,
 ) {
-	const { resolvedUrl } = context;
-	if (!coffeescriptExtensionsRgx.test(resolvedUrl)) return; // step aside
+  const { resolvedUrl } = context;
+  if (!coffeescriptExtensionsRgx.test(resolvedUrl)) return; // step aside
 
-	const format = interimResult.format || await getPackageType(resolvedUrl);
-	if (format === 'commonjs') return { format };
+  const format = interimResult.format || await getPackageType(resolvedUrl);
+  if (format === 'commonjs') return { format };
 
-	const rawSource = (
-		interimResult.source
-		|| await defaulLoad(resolvedUrl, { ...context, format }).source
-	)
-	const transformedSource = CoffeeScript.compile(rawSource.toString(), {
-		bare: true,
-		filename: resolvedUrl,
-	});
+  const rawSource = (
+    interimResult.source
+    || await defaulLoad(resolvedUrl, { ...context, format }).source
+  )
+  const transformedSource = CoffeeScript.compile(rawSource.toString(), {
+    bare: true,
+    filename: resolvedUrl,
+  });
 
-	return {
-		format,
-		source: transformedSource,
-	};
+  return {
+    format,
+    source: transformedSource,
+  };
 }
 
 function getPackageType(url) {/* … */ }
@@ -241,40 +241,40 @@ const coffeescriptExtensionsRgs = /* … */
 export async function resolve(/* … */) {/* … */ }
 
 export async function load(
-	interimResult, // possibly output of coffeescript-loader
-	context,
-	defaulLoad,
+  interimResult, // possibly output of coffeescript-loader
+  context,
+  defaulLoad,
 ) {
-	const { resolvedUrl } = context;
-	const babelConfig = await getBabelConfig(resolvedUrl);
+  const { resolvedUrl } = context;
+  const babelConfig = await getBabelConfig(resolvedUrl);
 
-	const format = (
-		interimResult.format
-		|| babelOutputToFormat.get(babelConfig.output.format)
-	);
+  const format = (
+    interimResult.format
+    || babelOutputToFormat.get(babelConfig.output.format)
+  );
 
-	if (format === 'commonjs') return { format };
+  if (format === 'commonjs') return { format };
 
-	const sourceToTranspile = (
-		interimResult.source
-		|| await defaulLoad(resolvedUrl, { ...context, format }).source
-	);
-	const transformedSource = Babel.transformSync(
-		sourceToTranspile.toString(),
-		babelConfig,
-	).code;
+  const sourceToTranspile = (
+    interimResult.source
+    || await defaulLoad(resolvedUrl, { ...context, format }).source
+  );
+  const transformedSource = Babel.transformSync(
+    sourceToTranspile.toString(),
+    babelConfig,
+  ).code;
 
-	return {
-		format,
-		source: transformedSource,
-	};
+  return {
+    format,
+    source: transformedSource,
+  };
 }
 
 function getBabelConfig(url) {/* … */ }
 const babelOutputToFormat = new Map([
-	['cjs', 'commonjs'],
-	['esm', 'module'],
-	// …
+  ['cjs', 'commonjs'],
+  ['esm', 'module'],
+  // …
 ]);
 ```
 </details>
