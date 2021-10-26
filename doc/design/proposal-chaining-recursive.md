@@ -4,11 +4,9 @@
 
 Say you had a chain of three loaders:
 
-1. The `unpkg` loader resolves a specifier `foo` to an URL `http://unpkg.com/foo`.
-
-2. The `http-to-https` loader rewrites that URL to `https://unpkg.com/foo`.
-
-3. The `cache-buster` that takes the URL and adds a timestamp to the end, so like `https://unpkg.com/foo?ts=1234567890`.
+1. `unpkg` resolves a specifier `foo` to an URL `http://unpkg.com/foo`.
+2. `https` rewrites that URL to `https://unpkg.com/foo`.
+3. `cache-buster` takes the URL and adds a timestamp to the end, like `https://unpkg.com/foo?ts=1234567890`.
 
 The hook functions nest: each one always must returns a plain object, and the chaining happens as a result of calling `next()`. A hook that fails to return triggers an exception.
 
@@ -54,7 +52,7 @@ A hook including `shortCircuit: true` will cause the chain to short-circuit, imm
 ### `cache-buster` resolver
 
 <details>
-<summary>`cachebuster.mjs`</summary>
+<summary>`cache-buster-resolver.mjs`</summary>
 
 ```js
 export async function resolve(
@@ -81,7 +79,7 @@ function supportsQueryString(/* … */) {/* … */}
 ### `https` resolver
 
 <details>
-<summary>`https.mjs`</summary>
+<summary>`https-loader.mjs`</summary>
 
 ```js
 export async function resolve(
@@ -100,13 +98,15 @@ export async function resolve(
 
   return result;
 }
+
+export async function load(/* … */) {/* … */ }
 ```
 </details>
 
 ### `unpkg` resolver
 
 <details>
-<summary>`unpkg.mjs`</summary>
+<summary>`unpkg-resolver.mjs`</summary>
 
 ```js
 export async function resolve(
@@ -173,7 +173,7 @@ The below examples are not exhaustive and provide only the gist of what each loa
 ### `babel` loader
 
 <details>
-<summary>`babel.mjs`</summary>
+<summary>`babel-loader.mjs`</summary>
 
 ```js
 export async function resolve(/* … */) {/* … */ }
@@ -210,7 +210,7 @@ const babelOutputToFormat = new Map([
 ### `coffeescript` loader
 
 <details>
-<summary>`coffeescript.mjs`</summary>
+<summary>`coffeescript-loader.mjs`</summary>
 
 ```js
 export async function resolve(/* … */) {/* … */}
@@ -245,17 +245,10 @@ const coffeescriptExtensionsRgs = /* … */
 ### `https` loader
 
 <details>
-<summary>`https.mjs`</summary>
+<summary>`https-loader.mjs`</summary>
 
 ```js
 import { get } from 'https';
-
-const mimeTypeToFormat = new Map([
-  ['application/node', 'commonjs'],
-  ['application/javascript', 'module'],
-  ['application/json', 'json'],
-  // …
-]);
 
 export async function load(
   url,
@@ -266,7 +259,6 @@ export async function load(
 
   return new Promise(function loadHttpsSource(resolve, reject) {
     get(url, function getHttpsSource(res) {
-      // Determine the format from the MIME type of the response
       const format = mimeTypeToFormat.get(res.headers['content-type']);
       let source = '';
 
@@ -276,5 +268,14 @@ export async function load(
     }).on('error', (err) => reject(err));
   });
 }
+
+const mimeTypeToFormat = new Map([
+  ['application/node', 'commonjs'],
+  ['application/javascript', 'module'],
+  ['text/javascript', 'module'],
+  ['application/json', 'json'],
+  ['text/coffeescript', 'coffeescript'],
+  // …
+]);
 ```
 </details>
