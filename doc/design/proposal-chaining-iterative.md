@@ -23,15 +23,15 @@ Resolve hooks would have the following signature:
 
 ```ts
 export async function resolve(
-	interimResult: {          // result from the previous hook
-		format = '',            // most recently provided value from a previous hook
-		url = '',               // most recently provided value from a previous hook
+	interimResult: {         // result from the previous hook
+		format = '',           // most recently provided value from a previous hook
+		url = '',              // most recently provided value from a previous hook
 	},
 	context: {
 		conditions = string[], // export conditions from the relevant package.json
 		parentUrl = null,      // foo.mjs imports bar.mjs
 		                       // when module is bar.mjs, parentUrl is foo.mjs
-		originalSpecifier,     // The original value of the import specifier
+		originalSpecifier: string, // The original value of the import specifier
 	},
 	defaultResolve,          // node's default resolve hook
 ): {
@@ -126,24 +126,24 @@ The below examples are not exhaustive and provide only the gist of what each loa
 
 Load hooks would have the following signature:
 
-```js
+```ts
 export async function load(
-	interimResult: {     // result from the previous hook
-		format = '',       // the value if resolve settled with a `format`
-		                   // until a load hook provides a different value
-		source = '',       //
+	interimResult: {         // result from the previous hook
+		format = '',           // the value if resolve settled with a `format`
+		                       // until a load hook provides a different value
+		source = '',           //
 	},
 	context: {
-		conditions,        // export conditions from the relevant package.json
-		parentUrl,         // foo.mjs imports bar.mjs
-		                   // when module is bar, parentUrl is foo.mjs
-		resolvedUrl,       // the url to which the resolve hook chain settled
+		conditions = string[], // export conditions from the relevant package.json
+		parentUrl = null,      // foo.mjs imports bar.mjs
+		                       // when module is bar, parentUrl is foo.mjs
+		resolvedUrl: string,   // the url to which the resolve hook chain settled
 	},
-	defaultLoad,         // node's default load hook
+	defaultLoad: function,   // node's default load hook
 ): {
-	format: string,      // the final hook must return one node understands
-	shortCircuit?: true, // signal that this hook intends to terminate the `load`
-	                     // chain
+	format: string,          // the final hook must return one node understands
+	shortCircuit?: true,     // signal that this hook intends to terminate the
+	                         // `load` chain
 	source: string | ArrayBuffer | TypedArray,
 } {
 ```
@@ -155,7 +155,7 @@ A hook including `shortCircuit: true` will cause the chain to short-circuit, imm
 <details>
 <summary>`https-loader.mjs`</summary>
 
-```ts
+```js
 export async function load(
 	interimResult,
 	{ resolvedUrl },
