@@ -311,3 +311,13 @@ function packageResolve(
   return [];
 }
 ```
+
+### Suggestions for refactoring of the API functions
+
+The API functions above are derived from the current code in [resolve.js](https://github.com/nodejs/node/blob/master/lib/internal/modules/esm/resolve.js). Here are some suggestions for refactoring to a cleaner API with some tradeoffs.
+
+- `shouldBeTreatedAsRelativeOrAbsolutePath` could be made more generic by determining all types of specifiers. Something like a function that takes a specifier and returns the type, eg. this (incomplete) example: `classifySpecifier(specifier) => relative | absolute | built_in | internal`. The tradeoff here would probably be performance.
+
+- `packageImportsResolve` currently takes a `readFile` callback. It only uses this to do an unconditional call to`getPackageScopeConfig` at the very start. It might be better to do this call on the outside and pass the contents of the file into `packageImportsResolve` instead. This seems more straightforward than passing in a callback.
+
+- `resolveSelf` currently takes a `readFile` callback. It only uses this to do an unconditional call to`getPackageScopeConfig` at the very start. It might be better to do this call on the outside and pass the contents of the file into `resolveSelf` instead. This seems more straightforward than passing in a callback.
