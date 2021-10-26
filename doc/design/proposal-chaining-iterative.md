@@ -4,20 +4,20 @@
 
 Say you had a chain of three loaders:
 
-* `unpkg-resolver` converts a bare specifier like `foo` to a url `http://unpkg.com/foo`.
-1. `http-to-https-resolver` rewrites insecure http urls to the https, like `https://unpkg.com/foo`.
-1. `cache-buster-resolver` adds a timestamp to a url end, like `https://unpkg.com/foo?t=1234567890`.
+1. `unpkg` resolves a specifier `foo` to an URL `http://unpkg.com/foo`.
+2. `https` rewrites that URL to `https://unpkg.com/foo`.
+3. `cache-buster` takes the URL and adds a timestamp to the end, like `https://unpkg.com/foo?ts=1234567890`.
 
 ```console
 node \
---loader unpkg-resolver \
---loader https-resolver \
---loader cache-buster-resolver
+--loader unpkg \
+--loader https \
+--loader cache-buster
 ```
 
 These would be called in the following sequence:
 
-`unpkg-resolver` → `https-resolver` → `cache-buster-resolver`
+`unpkg` → `https` → `cache-buster`
 
 Resolve hooks would have the following signature:
 
@@ -65,7 +65,7 @@ export async function resolve(
 ### `https` resolver
 
 <details>
-<summary>`https-resolver.mjs`</summary>
+<summary>`https-loader.mjs`</summary>
 
 ```js
 export async function resolve(
@@ -78,13 +78,15 @@ export async function resolve(
 
   return { url: url.toString() };
 }
+
+export async function load(/* … */) {/* … */ }
 ```
 </details>
 
 ### `cache-buster` resolver
 
 <details>
-<summary>`cachebuster-resolver.mjs`</summary>
+<summary>`cache-buster-resolver.mjs`</summary>
 
 ```js
 export async function resolve(
@@ -98,6 +100,8 @@ export async function resolve(
 
   return { url: url.toString() };
 }
+
+function supportsQueryString(/* … */) {/* … */}
 ```
 </details>
 
@@ -106,24 +110,24 @@ export async function resolve(
 
 Say you had a chain of three loaders:
 
-* `babel-loader` backwards time-machine
-* `coffeescript-loader` transforms coffeescript to vanilla javascript
-* `https-loader` loads source from remote
+* `babel` backwards time-machine
+* `coffeescript` transforms coffeescript to vanilla javascript
+* `https` loads source from remote
 
 ```console
 node \
---loader https-loader \
---loader babel-loader \
---loader coffeescript-loader \
+--loader https \
+--loader babel \
+--loader coffeescript \
 ```
 
 These would be called in the following sequence:
 
-(`https-loader` OR `defaultLoad`) → `coffeescript-loader` → `babel-loader`
+(`https` OR `defaultLoad`) → `coffeescript` → `babel`
 
-1. `defaultLoad` / `https-loader` needs to be first to actually get the source, which is fed to the subsequent loader
-1. `coffeescript-loader` receives the raw source from the previous loader and transpiles coffeescript files to regular javascript
-1. `babel-loader` receives potentially bleeding-edge JavaScript and transforms it to some ancient JavaScript target
+1. `defaultLoad` / `https` needs to be first to actually get the source, which is fed to the subsequent loader
+1. `coffeescript` receives the raw source from the previous loader and transpiles coffeescript files to regular javascript
+1. `babel` receives potentially bleeding-edge JavaScript and transforms it to some ancient JavaScript target
 
 The below examples are not exhaustive and provide only the gist of what each loader needs to do and how it interacts with the others.
 
