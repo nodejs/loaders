@@ -191,23 +191,40 @@ export function findPackageJson(
 
 Note that the resolve from the `packageResolve` function can be ambigous in that an array of multiple possible URLs is returned. This is becuase the `legacyMainResolve` is ambigous and is avoiding file system access by returning all possibilites rather than looking in the file system for what exists. The application is left to sort out which possibility is the right one with it's own logic.
 
+Below is an example of a naive typescript resolve hook. For imports ending in `.js` it changes them to `.ts`.
+
 ```ts
 import * as rua from "utility-functions-from-above";
 
-function startResolve(
-  specifier: string,
-  base: string | undefined,
-  conditionsArray: ReadonlyArray<string>,
-  isDirectory: IsDirectory,
-  readFile: ReadFile
-): ResolveReturn | undefined {
+export function resolve(
+  specifier,
+  context,
+  defaultResolve
+): { url: string; format: string } {
+  // Let node handle `data:` and `node:` prefix etc.
+  const excludeRegex = /^\w+:/;
+  if (excludeRegex.test(specifier)) {
+    return undefined;
+  }
+
+  // Use regular filesystem
+  const readFile = (path: string) => fs.readFileSync(path, "utf8");
+  const isDirectory = (path: string) =>
+    fs.statSync(path, { throwIfNoEntry: false })?.isDirectory() ?? false;
+
   // Convert conditions to set
   const conditions = rua.getConditionsSet(conditionsArray);
 
   // Resolve path specifiers
   if (rua.shouldBeTreatedAsRelativeOrAbsolutePath(specifier)) {
-    // Application specific logic to resolve path specifiers
-    return appliationLogicToResolvePathSpecifiers();
+    // If parentURL was not specified, then we use cwd
+    const { parentURL: parentURLIn, conditions } = context;
+    const parentURL = parentURLIn ?? filesystem.cwd();
+    // Just change .js to .ts
+    return {
+      url: makeTypescriptUrlFromJs(specifier, parentURL),
+      format: "module",
+    };
   }
 
   // Resolve bare specifiers
@@ -233,9 +250,15 @@ function startResolve(
     );
   }
 
-  // At this point the bare specifier is resolved to one or more possible files
+  // At this point the bare specifier is resolved to one or more possible files,
   // Use application specific logic to determine which one to use (or return undefined if none exists)
-  return applicationLogicToSortOutWhichUrlToUse();
+  for (const pu of possibleUrls) {
+    if (fs.existsSync(pu)) {
+      return { url: makeTypescriptUrlFromJs(pu), format: "module" };
+    }
+  }
+
+  return undefined;
 }
 
 /**
