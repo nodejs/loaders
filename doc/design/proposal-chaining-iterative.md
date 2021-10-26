@@ -23,22 +23,25 @@ Resolve hooks would have the following signature:
 
 ```ts
 export async function resolve(
-	interimResult: {         // result from the previous hook
-		format = '',           // most recently provided value from a previous hook
-		url = '',              // most recently provided value from a previous hook
+	interimResult: {             // results from the previous hook
+		format = '',
+		url = '',
 	},
 	context: {
-		conditions = string[], // export conditions from the relevant package.json
-		parentUrl = null,      // foo.mjs imports bar.mjs
-		                       // when module is bar.mjs, parentUrl is foo.mjs
-		originalSpecifier: string, // The original value of the import specifier
+		conditions = string[],     // export conditions of the relevant package.json
+		parentUrl = null,          // foo.mjs imports bar.mjs
+		                           // when module is bar.mjs, parentUrl is foo.mjs
+		originalSpecifier: string, // the original value of the import specifier
 	},
-	defaultResolve,          // node's default resolve hook
+	defaultResolve,              // node's default resolve hook
 ): {
-	format?: string,         // a hint to the load hook (it can be ignored)
-	shortCircuit?: true,     // signal that this hook intends to terminate the
-	                         // `resolve` chain
-	url: string,             // the final hook must return a valid URL string
+	format?: string,             // a hint to the load hook (it can be ignored)
+  signals?: {                  // signals from this hook to the ESMLoader
+    contextOverride?: object,  // the new `context` argument for the next hook
+	  interimIgnored?: true,     // interimResult was intentionally ignored
+    shortCircuit?: true,       // `resolve` chain should be terminated
+  },
+  url: string,                 // the final hook must return a valid URL string
 } {
 ```
 
@@ -128,22 +131,25 @@ Load hooks would have the following signature:
 
 ```ts
 export async function load(
-	interimResult: {         // result from the previous hook
-		format = '',           // the value if resolve settled with a `format`
-		                       // until a load hook provides a different value
-		source = '',           //
+	interimResult: {             // result from the previous hook
+		format = '',               // the value if `resolve` settled with a `format`
+		                           // until a load hook provides a different value
+		source = '',
 	},
 	context: {
-		conditions = string[], // export conditions from the relevant package.json
-		parentUrl = null,      // foo.mjs imports bar.mjs
-		                       // when module is bar, parentUrl is foo.mjs
-		resolvedUrl: string,   // the url to which the resolve hook chain settled
+		conditions = string[],     // export conditions of the relevant package.json
+		parentUrl = null,          // foo.mjs imports bar.mjs
+		                           // when module is bar, parentUrl is foo.mjs
+		resolvedUrl: string,       // url to which the resolve hook chain settled
 	},
-	defaultLoad: function,   // node's default load hook
+	defaultLoad: function,       // node's default load hook
 ): {
-	format: string,          // the final hook must return one node understands
-	shortCircuit?: true,     // signal that this hook intends to terminate the
-	                         // `load` chain
+	format: string,              // the final hook must return any node supports
+  signals?: {                  // signals from this hook to the ESMLoader
+    contextOverride?: object,  // the new `context` argument for the next hook
+	  interimIgnored?: true,     // interimResult was intentionally ignored
+    shortCircuit?: true,       // `resolve` chain should be terminated
+  },
 	source: string | ArrayBuffer | TypedArray,
 } {
 ```
