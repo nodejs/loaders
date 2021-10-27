@@ -19,7 +19,7 @@ Custom loaders are intended to chain to support various concerns beyond the scop
 
 ### Proposals
 
-* [Recursive chaining](./proposal-chaining-recursive.md)
+* [Chaining Hooks “Middleware” Design](./proposal-chaining-middleware.md)
 
 ## History
 
