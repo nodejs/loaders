@@ -1,29 +1,27 @@
-# Chaining Hooks “Recursive” Design
+# Chaining Hooks “Middleware” Design
 
 ## Chaining `resolve` hooks
 
 Say you had a chain of three loaders:
 
 1. `unpkg` resolves a specifier `foo` to an URL `http://unpkg.com/foo`.
-2. `https` rewrites that URL to `https://unpkg.com/foo`.
+2. `http-to-https` rewrites that URL to `https://unpkg.com/foo`.
 3. `cache-buster` takes the URL and adds a timestamp to the end, like `https://unpkg.com/foo?ts=1234567890`.
 
-The hook functions nest: each one always must returns a plain object, and the chaining happens as a result of calling `next()`. A hook that fails to return triggers an exception.
+The hook functions nest: each one must always return a plain object, and the chaining happens as a result of each function calling `next()`, which is a reference to the subsequent loader’s hook.
+
+A hook that fails to return triggers an exception. A hook that returns without calling `next()`, and without returning `shortCircuit: true`, also triggers an exception. These errors are to help prevent unintentional breaks in the chain.
 
 Following the pattern of `--require`:
 
 ```console
 node \
   --loader unpkg \
-  --loader https \
+  --loader http-to-https \
   --loader cache-buster
 ```
 
-These would be called in the following sequence: `cache-buster` calls `https`, which calls `unpkg`. Or in JavaScript terms, `cacheBuster(httpToHttps(unpkg(input)))`:
-
-1. `cache-buster` needs the output of `https` to append the query param
-2. `https` needs output of unpkg to convert it to https
-3. `unpkg` returns the remote url
+These would be called in the following sequence: `cache-buster` calls `http-to-https`, which calls `unpkg`. Or in JavaScript terms, `cacheBuster(httpToHttps(unpkg(input)))`.
 
 Resolve hooks would have the following signature:
 
@@ -31,91 +29,82 @@ Resolve hooks would have the following signature:
 export async function resolve(
   specifier: string,         // The original specifier
   context: {
-    conditions = string[],   // export conditions of the relevant package.json
-    parentUrl = null,        // foo.mjs imports bar.mjs
-                             // when module is bar, parentUrl is foo.mjs
-                             // when module is bar.mjs, parentUrl is foo.mjs
+    conditions = string[],   // Export conditions of the relevant `package.json`
+    parentUrl = null,        // The module importing this one, or null if
+                             // this is the Node entry point
   },
-  next: function,            // the subsequent resolve hook in the chain (or,
-                             // node's defaultResolve if the hook is the final
-                             // supplied by the user)
+  next: function,            // The subsequent `resolve` hook in the chain,
+                             // or Node’s default `resolve` hook after the
+                             // last user-supplied `resolve` hook
 ): {
-  format?: string,           // a hint to the load hook (it can be ignored)
-  shortCircuit?: true,       // signal that this hook intends to terminate the
-                             // `resolve` chain
-  url: string,               // the final hook must return a valid URL string
+  format?: string,           // A hint to the load hook (it might be ignored)
+  shortCircuit?: true,       // A signal that this hook intends to terminate
+                             // the chain of `resolve` hooks
+  url: string,               // The absolute URL that this input resolves to
 } {
 ```
 
-A hook including `shortCircuit: true` will allow the chain to short-circuit, immediately terminating the hook's chain (no subsequent `resolve` hooks are called). The chain would naturally short-circuit if `next()` is not called, but that can lead to unexpected results that are often difficult to troubleshoot, so an error is thrown if both `next()` is not called and `shortCircuit` is not set.
-
-### `cache-buster` resolver
+### `cache-buster` loader
 
 <details>
-<summary>`cache-buster-resolver.mjs`</summary>
+<summary>`cache-buster.mjs`</summary>
 
 ```js
 export async function resolve(
   specifier,
   context,
-  next, // https' resolve
+  next, // In this example, `next` is https’ resolve
 ) {
   const result = await next(specifier, context);
 
-  const url = new URL(result.url); // this can throw, so handle appropriately
+  const url = new URL(result.url);
 
-  if (supportsQueryString(url.protocol)) { // exclude `data:` & friends
+  if (url.protocol !== 'data:')) { // `data:` URLs don’t support query strings
     url.searchParams.set('ts', Date.now());
-    result.url = url.href;
   }
 
-  return result;
+  return { url: url.href };
 }
-
-function supportsQueryString(/* … */) {/* … */}
 ```
 </details>
 
-### `https` resolver
+### `http-to-https` loader
 
 <details>
-<summary>`https-loader.mjs`</summary>
+<summary>`http-to-https.mjs`</summary>
 
 ```js
 export async function resolve(
   specifier,
   context,
-  next, // unpkg's resolve
+  next, // In this example, `next` is unpkg’s resolve
 ) {
   const result = await next(specifier, context);
 
-  const url = new URL(result.url); // this can throw, so handle appropriately
+  const url = new URL(result.url);
 
-  if (url.protocol = 'http:') {
+  if (url.protocol === 'http:') {
     url.protocol = 'https:';
-    result.url = url.href;
   }
 
-  return result;
+  return { url: url.href };
 }
-
-export async function load(/* … */) {/* … */ }
 ```
 </details>
 
-### `unpkg` resolver
+### `unpkg` loader
 
 <details>
-<summary>`unpkg-resolver.mjs`</summary>
+<summary>`unpkg.mjs`</summary>
 
 ```js
 export async function resolve(
   specifier,
   context,
-  next, // Node's defaultResolve
+  next, // In this example, `next` is Node’s default `resolve`
 ) {
-  if (isBareSpecifier(specifier)) {
-    return `http://unpkg.com/${specifier}`;
+  if (isBareSpecifier(specifier)) { // Implemented elsewhere
+    return { url: `http://unpkg.com/${specifier}` };
   }
 
   return next(specifier, context);
@@ -127,103 +116,102 @@ export async function resolve(
 
 Say you had a chain of three loaders:
 
-* `babel`
-* `coffeescript`
-* `https`
+* `babel` transforms modern JavaScript source into a specified target
+* `coffeescript` transforms CoffeeScript source into JavaScript source
+* `https` fetches `https:` URLs and returns their contents
+
+Following the pattern of `--require`:
 
 ```console
 node \
---loader babel \
---loader coffeescript \
---loader https \
+  --loader babel \
+  --loader coffeescript \
+  --loader https
 ```
 
-These would be called in the following sequence: `babel` calls `coffeescript`, which calls _either_ `https` or `defaultLoad`. Or in JavaScript terms, `babel(coffeescript(https(input)))` or `babel(coffeescript(defaultLoad(input)))`:
-
-1. `babel` needs the output of `coffeescript` to transform bleeding-edge JavaScript features to a desired target
-2. `coffeescript` needs the raw source (the output of either `defaultLoad` or `https`) to transform CoffeeScript files into JavaScript
-3. `defaultLoad` / `https` gets the actual, raw source
+These would be called in the following sequence: `babel` calls `coffeescript`, which calls `https`. Or in JavaScript terms, `babel(coffeescript(https(input)))`:
 
 Load hooks would have the following signature:
 
 ```ts
 export async function load(
-  resolvedUrl: string,       // the url to which the resolve hook chain settled
+  resolvedUrl: string,       // The URL returned by the last hook of the
+                             // `resolve` chain
   context: {
-    conditions = string[],   // export conditions of the relevant package.json
-    parentUrl = null,        // foo.mjs imports bar.mjs
-                             // when module is bar, parentUrl is foo.mjs
-    resolvedFormat?: string, // the value if resolve settled with a `format`
+    conditions = string[],   // Export conditions of the relevant `package.json`
+    parentUrl = null,        // The module importing this one, or null if
+                             // this is the Node entry point
+    resolvedFormat?: string, // The format returned by the last hook of the
+                             // `resolve` chain
   },
-  next: function,            // the subsequent load hook in the chain (or,
-                             // node's defaultLoad if the hook is the final
-                             // supplied by the user)
+  next: function,            // The subsequent `load` hook in the chain,
+                             // or Node’s default `load` hook after the
+                             // last user-supplied `load` hook
 ): {
-  format: string,            // the final hook must return one node understands
-  shortCircuit?: true,       // signal that this hook intends to terminate the
-                             // `load` chain
-  source: string | ArrayBuffer | TypedArray,
+  format: 'builtin' | 'commonjs' | 'module' | 'json' | 'wasm', // A format
+                             // that Node understands
+  shortCircuit?: true,       // A signal that this hook intends to terminate
+                             // the chain of `load` hooks
+  source: string | ArrayBuffer | TypedArray, // The source for Node to evaluate
 } {
 ```
-
-A hook including `shortCircuit: true` will allow the chain to short-circuit, immediately terminating the hook's chain (no subsequent `load` hooks are called). The chain would naturally short-circuit if `next()` is not called, but that can lead to unexpected results that are often difficult to troubleshoot, so an error is thrown if both `next()` is not called and `shortCircuit` is not set.
-
-The below examples are not exhaustive and provide only the gist of what each loader needs to do and how it interacts with the others.
 
 ### `babel` loader
 
 <details>
-<summary>`babel-loader.mjs`</summary>
+<summary>`babel.mjs`</summary>
 
 ```js
-export async function resolve(/* … */) {/* … */ }
-
-export async function load(
-  url,
-  context,
-  next, // coffeescript's load ← https' load ← node's defaultLoad
-) {
-  const babelConfig = await getBabelConfig(url);
-
-  const format = babelOutputToFormat.get(babelConfig.output.format);
-
-  if (format === 'commonjs') return { format };
-
-  const { source: transpiledSource } = await next(url, { ...context, format });
-  const { code: transformedSource } = Babel.transformSync(transpiledSource.toString(), babelConfig);
-
-  return {
-    format,
-    source: transformedSource,
-  };
-}
-
-function getBabelConfig(url) {/* … */ }
 const babelOutputToFormat = new Map([
   ['cjs', 'commonjs'],
   ['esm', 'module'],
   // …
 ]);
+
+export async function load(
+  url,
+  context,
+  next, // In this example, `next` is coffeescript’s hook
+) {
+  const babelConfig = await getBabelConfig(url); // Implemented elsewhere
+
+  const format = babelOutputToFormat.get(babelConfig.output.format);
+
+  if (format === 'commonjs') {
+    return { format, source: '' }; // Source is ignored for CommonJS
+  }
+
+  const { source: transpiledSource } = await next(url, { ...context, format });
+  const { code: transformedSource } = Babel.transformSync(transpiledSource.toString(), babelConfig);
+
+  return { format, source: transformedSource };
+}
 ```
 </details>
 
 ### `coffeescript` loader
 
 <details>
-<summary>`coffeescript-loader.mjs`</summary>
+<summary>`coffeescript.mjs`</summary>
 
 ```js
-export async function resolve(/* … */) {/* … */}
+// CoffeeScript files end in .coffee, .litcoffee or .coffee.md.
+const extensionsRegex = /\.coffee$|\.litcoffee$|\.coffee\.md$/;
 
 export async function load(
   url,
   context,
-  next, // https' load ← node's defaultLoad
+  next, // In this example, `next` is https’ hook
 ) {
-  if (!coffeescriptExtensionsRgx.test(url)) return next(url, context, defaultLoad);
+  if (!extensionsRegex.test(url)) { // Skip this hook for non-CoffeeScript imports
+    return next(url, context);
+  }
 
-  const format = await getPackageType(url);
-  if (format === 'commonjs') return { format };
+  const format = await getPackageType(url); // Implemented elsewhere
+
+  if (format === 'commonjs') {
+    return { format, source: '' }; // Source is ignored for CommonJS
+  }
 
   const { source: rawSource } = await next(url, { ...context, format });
   const transformedSource = CoffeeScript.compile(rawSource.toString(), {
@@ -231,51 +219,47 @@ export async function load(
     filename: url,
   });
 
-  return {
-    format,
-    source: transformedSource,
-  };
+  return { format, source: transformedSource };
 }
-
-function getPackageType(url) {/* … */}
-const coffeescriptExtensionsRgs = /* … */
 ```
 </details>
 
 ### `https` loader
 
 <details>
-<summary>`https-loader.mjs`</summary>
+<summary>`https.mjs`</summary>
 
 ```js
-import { get } from 'https';
-
-export async function load(
-  url,
-  context,
-  next, // node's defaultLoad
-) {
-  if (!url.startsWith('https://')) return next(url, context);
-
-  return new Promise(function loadHttpsSource(resolve, reject) {
-    get(url, function getHttpsSource(res) {
-      const format = mimeTypeToFormat.get(res.headers['content-type']);
-      let source = '';
-
-      res.on('data', (chunk) => source += chunk);
-      res.on('end', () => resolve({ format, source }));
-      res.on('error', reject);
-    }).on('error', (err) => reject(err));
-  });
-}
+import { get } from 'node:https';
 
 const mimeTypeToFormat = new Map([
   ['application/node', 'commonjs'],
   ['application/javascript', 'module'],
   ['text/javascript', 'module'],
   ['application/json', 'json'],
+  ['application/wasm', 'wasm'],
   ['text/coffeescript', 'coffeescript'],
   // …
 ]);
+
+export async function load(
+  url,
+  context,
+  next, // In this example, `next` is Node’s default `load`
+) {
+  if (!url.startsWith('https://')) { // Skip this hook for non-https imports
+    return next(url, context);
+  }
+
+  return new Promise(function loadHttpsSource(resolve, reject) {
+    get(url, function getHttpsSource(res) {
+      const format = mimeTypeToFormat.get(res.headers['content-type']);
+      let source = '';
+      res.on('data', (chunk) => source += chunk);
+      res.on('end', () => resolve({ format, source }));
+      res.on('error', reject);
+    }).on('error', (err) => reject(err));
+  });
+}
 ```
 </details>
