@@ -19,8 +19,8 @@ Custom loaders are intended to chain to support various concerns beyond the scop
 
 ### Proposals
 
-* [Recursive chaining](./proposal-chaining-recursive.md)
-* [Iterative chaining](./proposal-chaining-iterative.md)
+* [Chaining Hooks “Iterative” Design](./proposal-chaining-iterative.md)
+* [Chaining Hooks “Middleware” Design](./proposal-chaining-middleware.md)
 
 ## History
 
