@@ -1,6 +1,6 @@
 # Loaders Design
 
-There are currently [three loader hooks](https://github.com/nodejs/node/tree/master/doc/api/esm.html#esm_hooks):
+There are currently [three loader hooks](https://github.com/nodejs/node/tree/master/doc/api/esm.md#hooks):
 
 1. `resolve`: Takes a specifier (the string after `from` in an `import` statement) and converts it into an URL to be loaded.
 
