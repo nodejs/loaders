@@ -264,7 +264,7 @@ export async function load(
 ```
 </details>
 
-## Chaining `loadManifest` hooks
+## Chaining `readFile` hooks
 
 Say you had a chain of three loaders:
 
@@ -286,20 +286,18 @@ These would be called in the following sequence: `zip` calls `tgz`, which calls 
 Load hooks would have the following signature:
 
 ```ts
-export async function loadManifest(
-  manifestUrl: string,       // A URL that may or may not point to an existing
-                             // location
+export async function readFile(
+  url: string,               // A URL that point to a location; whether the file
+                             // exists or not isn't guaranteed
   context: {
     conditions = string[],   // Export conditions of the relevant `package.json`
-    parentUrl = null,        // The module importing this one, or null if
-                             // this is the Node entry point
   },
-  next: function,            // The subsequent `loadManifest` hook in the chain,
-                             // or Node’s default `loadManifest` hook after the
-                             // last user-supplied `loadManifest` hook
+  next: function,            // The subsequent `readFile` hook in the chain,
+                             // or Node’s default `readFile` hook after the
+                             // last user-supplied `readFile` hook
 ): {
-  manifest: string | ArrayBuffer | TypedArray | null, // The content of the
-                             // manifest, or `null` if it doesn't exist.
+  data: string | ArrayBuffer | TypedArray | null, // The content of the
+                             // file, or `null` if it doesn't exist.
   shortCircuit?: true,       // A signal that this hook intends to terminate
                              // the chain of `load` hooks
 } {

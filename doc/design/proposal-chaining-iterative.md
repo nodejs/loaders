@@ -283,7 +283,7 @@ const babelOutputToFormat = new Map([
 ```
 </details>
 
-## Chaining `loadManifest` hooks
+## Chaining `readFile` hooks
 
 Say you had a chain of three loaders:
 
@@ -302,26 +302,24 @@ node \
 
 These would be called in the following sequence:
 
-(`zip` OR `defaultLoadManifest`) → `tgz` → `warc`
+(`zip` OR `defaultReadFile`) → `tgz` → `warc`
 
-1. `defaultLoadManifest` / `zip` needs to be first to know whether the manifest exists on the actual filesystem, which is fed to the subsequent loader
+1. `defaultReadFile` / `zip` needs to be first to know whether the manifest exists on the actual filesystem, which is fed to the subsequent loader
 1. `tgz` receives the raw source from the previous loader and, if necessary, checks for the manifest existence via its own rules
 1. `warc` does the same thing
 
 LoadManifest hooks would have the following signature:
 
 ```ts
-export async function loadManifest(
-  manifestUrl: string,         // A URL that may or may not point to an existing
-                               // location
+export async function readFile(
+  url: string,                // A URL that point to a location; whether the file
+                               // exists or not isn't guaranteed
   interimResult: {             // result from the previous hook
-    manifest: string | ArrayBuffer | TypedArray | null, // The content of the
-                               // manifest, or `null` if it doesn't exist.
+    data: string | ArrayBuffer | TypedArray | null, // The content of the
+                               // file, or `null` if it doesn't exist.
   },
   context: {
     conditions = string[],     // Export conditions of the relevant package.json
-    parentUrl = null,          // The module importing this one, or null if
-                               // this is the Node entry point
   },
   defaultLoadManifest: function, // Node's default load hook
 ): {
@@ -330,7 +328,7 @@ export async function loadManifest(
     interimIgnored?: true,     // interimResult was intentionally ignored
     shortCircuit?: true,       // `resolve` chain should be terminated
   },
-  manifest: string | ArrayBuffer | TypedArray | null, // The content of the
-                             // manifest, or `null` if it doesn't exist.
+  data: string | ArrayBuffer | TypedArray | null, // The content of the
+                               // file, or `null` if it doesn't exist.
 } {
 ```
