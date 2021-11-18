@@ -270,7 +270,7 @@ Say you had a chain of three loaders:
 
 * `zip` adds a virtual filesystem layer for in-zip access
 * `tgz` does the same but for tgz archives
-* `warc` does the same for warc archives.
+* `https` allows querying packages through the network
 
 Following the pattern of `--require`:
 
@@ -278,12 +278,12 @@ Following the pattern of `--require`:
 node \
   --loader zip \
   --loader tgz \
-  --loader warc
+  --loader https
 ```
 
-These would be called in the following sequence: `zip` calls `tgz`, which calls `warc`. Or in JavaScript terms, `zip(tgz(warc(input)))`:
+These would be called in the following sequence: `zip` calls `tgz`, which calls `https`. Or in JavaScript terms, `zip(tgz(https(input)))`:
 
-Load hooks would have the following signature:
+ReadFile hooks would have the following signature:
 
 ```ts
 export async function readFile(
