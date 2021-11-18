@@ -1,6 +1,6 @@
 # Loaders Design
 
-There are currently the following [loader hooks](https://github.com/nodejs/node/blob/master/doc/api/esm.md#hooks):
+There are currently the following [loader hooks](https://github.com/nodejs/node/blob/HEAD/doc/api/esm.md#hooks):
 
 ## Basic hooks
 
