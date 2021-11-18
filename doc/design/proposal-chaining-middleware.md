@@ -287,7 +287,7 @@ Load hooks would have the following signature:
 
 ```ts
 export async function readFile(
-  url: string,               // A URL that point to a location; whether the file
+  url: string,               // A URL pointing to a location; whether the file
                              // exists or not isn't guaranteed
   context: {
     conditions = string[],   // Export conditions of the relevant `package.json`
