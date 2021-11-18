@@ -289,7 +289,7 @@ Say you had a chain of three loaders:
 
 * `zip` adds a virtual filesystem layer for in-zip access
 * `tgz` does the same but for tgz archives
-* `warc` does the same for warc archives.
+* `https` allows querying packages through the network.
 
 Following the pattern of `--require`:
 
@@ -297,18 +297,18 @@ Following the pattern of `--require`:
 node \
   --loader zip \
   --loader tgz \
-  --loader warc
+  --loader https
 ```
 
 These would be called in the following sequence:
 
-(`zip` OR `defaultReadFile`) → `tgz` → `warc`
+(`zip` OR `defaultReadFile`) → `tgz` → `https`
 
-1. `defaultReadFile` / `zip` needs to be first to know whether the manifest exists on the actual filesystem, which is fed to the subsequent loader
-1. `tgz` receives the raw source from the previous loader and, if necessary, checks for the manifest existence via its own rules
-1. `warc` does the same thing
+1. `defaultReadFile` / `zip` needs to be first to know whether the file exists on the actual filesystem, which is fed to the subsequent loader
+1. `tgz` receives the raw source from the previous loader and, if necessary, checks for the file existence via its own rules
+1. `https` does the same thing
 
-LoadManifest hooks would have the following signature:
+ReadFile hooks would have the following signature:
 
 ```ts
 export async function readFile(
@@ -321,7 +321,7 @@ export async function readFile(
   context: {
     conditions = string[],     // Export conditions of the relevant package.json
   },
-  defaultLoadManifest: function, // Node's default load hook
+  defaultReadFile: function,   // Node's default load hook
 ): {
   signals?: {                  // Signals from this hook to the ESMLoader
     contextOverride?: object,  // A new `context` argument for the next hook
