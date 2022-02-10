@@ -1,0 +1,43 @@
+# Ambient Loaders Design
+
+## Problem
+
+Loaders let side logic be applied when resolving import statements. However, this only applies to the main application: loaders themselves aren’t currently affected by any other loaders. As a result, 3rd-party loaders cannot be injected if accessing them requires going through another loader. For instance, the following doesn’t work:
+
+```
+node --loader pnp --loader ts-node ./my-tool.mts
+```
+
+Indeed, importing `ts-node` would require the `pnp` loader to contribute to the resolution, but it’s not what happens today: both `pnp` and `ts-node` are resolved by the default Node resolver, preventing `ts-node` from resolving.
+
+The reason for that is an attempt to keep loaders as isolated as possible, to allow followup improvements like reusing them across workers or scaling them up. If all loaders were influenced by prior loaders, they’d effectively coalesce into a single one, which would prevent such work. Still, the problem remains.
+
+## Proposal
+
+If loaders cannot generally influence each other, we could have a subset of them do. Indeed, not all loaders affect the resolution so much that they are a requirement to followup loaders. We could have two levels of loaders:
+
+- Ambient loaders would be defined via the `--ambient-loader <module>` flag. They would be loaded sequentially, and would affect the resolution of all followup loaders.
+
+- Regular loaders would be defined via the `--loader <module>` flag. They would be loaded in parallel (at least conceptually). Because they’d only be loaded after the ambient loaders have finished evaluating, their resolution would be affected by ambient loaders.
+
+## Example
+
+Let’s imagine we have the following loaders:
+
+- pnp, which adds support for the Plug’n’Play resolution
+- zip, which adds zip file support to the `fs` module
+- yaml, which adds yaml file support to `import`
+- coffeescript, which adds coffeescript file support to `import`
+
+The command line would end up like this (in practice `--ambient-loader` would probably be passed via `NODE_OPTIONS` rather than directly on the command line):
+
+```
+node --ambient-loader zip
+     --ambient-loader pnp
+     --loader yaml
+     --loader coffeescript
+     ./path/to/script.mjs
+```
+
+When resolving `coffeescript`, we’d go into the `pnp` loader (but not `coffeescript`, which isn’t an ambient loader). The `pnp` loader itself would have been loaded after the `zip` loader ran, causing its `fs` import to be resolved to a custom module adding zip support to `fs` rather than the usual builtin module.
+
