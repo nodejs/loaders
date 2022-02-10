@@ -24,10 +24,12 @@ If loaders cannot generally influence each other, we could have a subset of them
 
 Let’s imagine we have the following loaders:
 
-- pnp, which adds support for the Plug’n’Play resolution
 - zip, which adds zip file support to the `fs` module
+- pnp, which adds support for the Plug’n’Play resolution
 - yaml, which adds yaml file support to `import`
 - coffeescript, which adds coffeescript file support to `import`
+
+The first two are critical to a successful resolution: without `zip`, PnP wouldn't be able to load files from the zip archives. Without `pnp`, Node would look for the `yaml` and `coffeescript` loaders into a `node_modules` folder, which would fail. On the other hand, `yaml` and `coffeescript` don't depend on each other.
 
 The command line would end up like this (in practice `--ambient-loader` would probably be passed via `NODE_OPTIONS` rather than directly on the command line):
 
