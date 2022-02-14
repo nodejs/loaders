@@ -17,10 +17,7 @@ There are currently [three loader hooks](https://github.com/nodejs/node/tree/mas
 
 Custom loaders are intended to chain to support various concerns beyond the scope of core, such as build tooling, mocking, transpilation, etc.
 
-### Proposals
-
-* [Chaining Hooks “Iterative” Design](./proposal-chaining-iterative.md)
-* [Chaining Hooks “Middleware” Design](./proposal-chaining-middleware.md)
+We plan to support chaining via what we’re calling the [Chaining Hooks “Middleware” Design](./proposal-chaining-middleware.md).
 
 ## History
 
