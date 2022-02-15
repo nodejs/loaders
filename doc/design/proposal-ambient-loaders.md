@@ -16,7 +16,7 @@ The reason for that is an attempt to keep loaders as isolated as possible, to al
 
 If loaders cannot generally influence each other, we could have a subset of them do. Indeed, not all loaders affect the resolution so much that they are a requirement to followup loaders. We could have two levels of loaders:
 
-- Ambient loaders would be defined via the `--ambient-loader <module>` flag. They would be loaded sequentially, and would affect the resolution of all followup loaders.
+- Ambient loaders would be defined via the `--ambient-loader <module>` flag. They would be loaded sequentially and would affect the resolution of all subsequent ambient and regular loaders.
 
 - Regular loaders would be defined via the `--loader <module>` flag. They would be loaded in parallel (at least conceptually). Because they’d only be loaded after the ambient loaders have finished evaluating, their resolution would be affected by ambient loaders.
 
