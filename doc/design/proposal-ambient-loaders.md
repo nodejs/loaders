@@ -2,13 +2,15 @@
 
 ## Problem
 
-Loaders let side logic be applied when resolving import statements. However, this only applies to the main application: loaders themselves aren’t currently affected by any other loaders. As a result, 3rd-party loaders cannot be injected if accessing them requires going through another loader. For instance, the following doesn’t work:
+Loaders let side logic be applied when resolving import statements. However, this only applies to the main application: loaders themselves aren’t currently affected by any other loaders. As a result, 3rd-party loaders cannot be injected if accessing them requires going through another loader.
+
+For instance, imagining a loader that would allow modules to be loaded from a `node_modules.zip` file (instead of the typical folder), the following wouldn’t work:
 
 ```
-node --loader pnp --loader ts-node ./my-tool.mts
+node --loader zip --loader ts-node ./my-tool.mts
 ```
 
-Indeed, importing `ts-node` would require the `pnp` loader to contribute to the resolution, but it’s not what happens today: both `pnp` and `ts-node` are resolved by the default Node resolver, preventing `ts-node` from resolving.
+Indeed, importing `ts-node` would require the `zip` loader to contribute to the resolution (so that the final path loaded is `$PROJECT/node_modules.zip/ts-node` instead of `$PROJECT/node_modules/ts-node`, which doesn't exist), but it’s not what happens today: both `zip` and `ts-node` are resolved by the default Node resolver, preventing `ts-node` from resolving.
 
 The reason for that is an attempt to keep loaders as isolated as possible, to allow followup improvements like reusing them across workers or scaling them up. If all loaders were influenced by prior loaders, they’d effectively coalesce into a single one, which would prevent such work. Still, the problem remains.
 
