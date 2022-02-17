@@ -34,7 +34,7 @@ This team is spun off from the [Modules team](https://github.com/nodejs/modules)
 
 ### Upcoming
 
-1. Implement chaining as described in the [design](doc/design.md), where the `default<hookName>` becomes `next` and references the next registered hook in the chain.
+1. Implement chaining as described in the [design](doc/design/proposal-chaining-middleware.md), where the `default<hookName>` becomes `next` and references the next registered hook in the chain.
 
 1. Get a `load` return value of `format: 'commonjs'` to work, or at least error informatively. See https://github.com/nodejs/node/issues/34753#issuecomment-735921348.
 
