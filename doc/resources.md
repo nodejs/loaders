@@ -18,6 +18,8 @@
 
 * [babel-register-esm](https://github.com/giltayar/babel-register-esm)
 
+* [create-esm-loader](https://github.com/sebamarynissen/create-esm-loader#readme) and [node-esm-loader](https://github.com/sebamarynissen/node-esm-loader#readme), along with [several compatible loaders](https://github.com/brev/esm-loaders#readme) (typescript, svelte, css, mocking, etc)
+
 * [targos/multiloader](https://github.com/targos/multiloader)
 
 * [testdouble.js](https://github.com/testdouble/testdouble.js)
