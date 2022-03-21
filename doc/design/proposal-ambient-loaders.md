@@ -22,12 +22,30 @@ If loaders cannot generally influence each other, we could have a subset of them
 
 - Regular loaders would be defined via the `--loader <module>` flag. They would be loaded in parallel (at least conceptually). Because they’d only be loaded after the ambient loaders have finished evaluating, their resolution would be affected by ambient loaders.
 
-## Example
+## Simple Example
+
+Let's imagine we have the following loaders:
+
+- ts, which adds support for TS files
+- my-custom-loader, which is written in TypeScript
+
+Without the TS loader, we wouldn't be able to even load the following custom loader. But by marking it as an ambiant loader, Node will make sure it'll be taken into account when resolving (and loading) my-custom-loader.
+
+
+The command line would end up like this:
+
+```
+node --ambient-loader ts
+     --loader my-custom-loader
+     ./path/to/script.mjs
+```
+
+## More Contrived Example
 
 Let’s imagine we have the following loaders:
 
 - zip, which adds zip file support to the `fs` module
-- pnp, which adds support for the Plug’n’Play resolution
+- pnp, which adds support for the Plug’n’Play resolution ([more details](https://yarnpkg.com/features/pnp))
 - yaml, which adds yaml file support to `import`
 - coffeescript, which adds coffeescript file support to `import`
 
