@@ -26,17 +26,16 @@ If loaders cannot generally influence each other, we could have a subset of them
 
 Let's imagine we have the following loaders:
 
-- ts, which adds support for TS files
-- my-custom-loader, which is written in TypeScript
+- `ts`, which adds support for TypeScript files
+- `my-custom-loader`, which is written in TypeScript
 
-Without the TS loader, we wouldn't be able to even load the following custom loader. But by marking it as an ambiant loader, Node will make sure it'll be taken into account when resolving (and loading) my-custom-loader.
-
+Without the `ts` loader, we wouldn’t be able to even load the following custom loader. But by marking it as an ambient loader, Node will make sure it’ll be taken into account when resolving (and loading) `my-custom-loader`.
 
 The command line would end up like this:
 
 ```
-node --ambient-loader ts
-     --loader my-custom-loader
+node --ambient-loader ts \
+     --loader my-custom-loader \
      ./path/to/script.mjs
 ```
 
