@@ -20,6 +20,8 @@
 
 * [create-esm-loader](https://github.com/sebamarynissen/create-esm-loader#readme) and [node-esm-loader](https://github.com/sebamarynissen/node-esm-loader#readme), along with [several compatible loaders](https://github.com/brev/esm-loaders#readme) (typescript, svelte, css, mocking, etc)
 
+* [jest-light-runner](https://github.com/nicolo-ribaudo/jest-light-runner)
+
 * [targos/multiloader](https://github.com/targos/multiloader)
 
 * [testdouble.js](https://github.com/testdouble/testdouble.js)
