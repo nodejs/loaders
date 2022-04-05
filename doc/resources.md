@@ -20,7 +20,7 @@
 
 * [create-esm-loader](https://github.com/sebamarynissen/create-esm-loader#readme) and [node-esm-loader](https://github.com/sebamarynissen/node-esm-loader#readme), along with [several compatible loaders](https://github.com/brev/esm-loaders#readme) (typescript, svelte, css, mocking, etc)
 
-* [jest-light-runner](https://github.com/nicolo-ribaudo/jest-light-runner)
+* [esmock](https://github.com/iambumblehead/esmock)
 
 * [targos/multiloader](https://github.com/targos/multiloader)
 
@@ -34,6 +34,6 @@
 
 * [Fastify](https://github.com/fastify/fastify/issues/2847)
 
-* [Jest](https://github.com/facebook/jest/issues/9430)
+* [Jest](https://github.com/facebook/jest/issues/9430) (see also [jest-light-runner](https://github.com/nicolo-ribaudo/jest-light-runner))
 
 * [OpenTelemetry](https://github.com/open-telemetry/opentelemetry-js/issues/1946)
