@@ -34,6 +34,8 @@ This team is spun off from the [Modules team](https://github.com/nodejs/modules)
 
    - [ ] Add an async `resolve` to [`module`](https://nodejs.org/api/module.html) module
 
+- [ ] Add helper/utility functions (eg `getPackageType()`) to [`module`](https://nodejs.org/api/module.html) module
+
 - [ ] Move loaders off thread
 
 - [ ] Get a `load` return value of `format: 'commonjs'` to work, or at least error informatively. See https://github.com/nodejs/node/issues/34753#issuecomment-735921348.
