@@ -30,7 +30,7 @@ This team is spun off from the [Modules team](https://github.com/nodejs/modules)
 
 - [x] Implement chaining as described in the [design](doc/design/proposal-chaining-middleware.md), where the `default<hookName>` becomes `next` and references the next registered hook in the chain. https://github.com/nodejs/node/pull/42623
 
-- [ ] Convert `resolve` from async to sync
+- [ ] Convert `resolve` from async to sync https://github.com/nodejs/node/pull/43363
 
    - [ ] Add an async `resolve` to [`module`](https://nodejs.org/api/module.html) module
 
