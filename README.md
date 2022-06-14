@@ -38,6 +38,8 @@ This team is spun off from the [Modules team](https://github.com/nodejs/modules)
 
 - [ ] Move loaders off thread
 
-- [ ] Get a `load` return value of `format: 'commonjs'` to work, or at least error informatively. See https://github.com/nodejs/node/issues/34753#issuecomment-735921348.
+- [ ] Support loading source when the return value of `load` has `format: 'commonjs'`. See https://github.com/nodejs/node/issues/34753#issuecomment-735921348 and https://github.com/nodejs/loaders-test/blob/835506a638c6002c1b2d42ab7137db3e7eda53fa/coffeescript-loader/loader.js#L45-L50.
 
-After this, we should get user feedback regarding the developer experience; for example, is too much boilerplate required? Should we have a separate `transform` hook? And so on. We should also investigate and potentially implement the [technical improvements](doc/use-cases.md#improvements) on our to-do list, such as the loaders-application communication channel and moving loaders into a thread.
+- [ ] First-class support for [import maps](https://github.com/WICG/import-maps) that doesn’t require a custom loader.
+
+After this, we should get user feedback regarding the developer experience; for example, is too much boilerplate required? Should we have a separate `transform` hook? And so on. We should also investigate and potentially implement the [technical improvements](doc/use-cases.md#improvements) on our to-do list.
