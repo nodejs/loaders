@@ -80,7 +80,10 @@ export async function preImport(specifier, { conditions, parentURL }) {
 }
 
 export function resolve(specifier, { parentURL }) {
-  return importMapResolve(importMap, specifier, parentURL);
+  return {
+    url: importMapResolve(importMap, specifier, parentURL),
+    shortCircuit: true
+  };
 }
 ```
 
