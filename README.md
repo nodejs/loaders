@@ -30,9 +30,13 @@ This team is spun off from the [Modules team](https://github.com/nodejs/modules)
 
 - [x] Implement chaining as described in the [design](doc/design/proposal-chaining-middleware.md), where the `default<hookName>` becomes `next` and references the next registered hook in the chain. https://github.com/nodejs/node/pull/42623
 
-- [ ] Add helper/utility functions (eg `getPackageType()`) to [`module`](https://nodejs.org/api/module.html) module
-
 - [ ] Move loaders off thread
+
+- [ ] Add helper/utility functions [`module`](https://nodejs.org/api/module.html) module
+
+   - [ ] Start with the functions that make up the ESM resolution algorithm as defined in the [spec](https://nodejs.org/api/esm.html#resolver-algorithm-specification). Create helper functions for each of the functions defined in that psuedocode: `esmResolve`, `packageImportsResolve`, `packageResolve`, `esmFileFormat`, `packageSelfResolve`, `readPackageJson`, `packageExportsResolve`, `lookupPackageScope`, `packageTargetResolve`, `packageImportsExportsResolve`, `patternKeyCompare`. (Not necessarily all with these exact names, but corresponding to these functions from the spec.)
+   
+   - [ ] Follow up with similar helper functions that make up what happens within Node’s internal `load`. (Definitions to come.)
 
 - [ ] Support loading source when the return value of `load` has `format: 'commonjs'`. See https://github.com/nodejs/node/issues/34753#issuecomment-735921348 and https://github.com/nodejs/loaders-test/blob/835506a638c6002c1b2d42ab7137db3e7eda53fa/coffeescript-loader/loader.js#L45-L50.
 
