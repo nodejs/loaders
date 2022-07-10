@@ -32,10 +32,10 @@ This team is spun off from the [Modules team](https://github.com/nodejs/modules)
 
 - [ ] Move loaders off thread
 
-- [ ] Add helper/utility functions [`module`](https://nodejs.org/api/module.html) module
+- [ ] Add [helper/utility functions](./doc/design/helpers.md) to the [`module`](https://nodejs.org/api/module.html) module
 
    - [ ] Start with the functions that make up the ESM resolution algorithm as defined in the [spec](https://nodejs.org/api/esm.html#resolver-algorithm-specification). Create helper functions for each of the functions defined in that psuedocode: `esmResolve`, `packageImportsResolve`, `packageResolve`, `esmFileFormat`, `packageSelfResolve`, `readPackageJson`, `packageExportsResolve`, `lookupPackageScope`, `packageTargetResolve`, `packageImportsExportsResolve`, `patternKeyCompare`. (Not necessarily all with these exact names, but corresponding to these functions from the spec.)
-   
+
    - [ ] Follow up with similar helper functions that make up what happens within Node’s internal `load`. (Definitions to come.)
 
 - [ ] Support loading source when the return value of `load` has `format: 'commonjs'`. See https://github.com/nodejs/node/issues/34753#issuecomment-735921348 and https://github.com/nodejs/loaders-test/blob/835506a638c6002c1b2d42ab7137db3e7eda53fa/coffeescript-loader/loader.js#L45-L50.
@@ -47,7 +47,7 @@ We hope that moving loaders off thread will allow us to preserve an async `resol
 - [ ] Convert `resolve` from async to sync https://github.com/nodejs/node/pull/43363
 
    - [ ] Add an async `resolve` to [`module`](https://nodejs.org/api/module.html) module
-   
+
    - [ ] Consider an API for async operations before resolution begins, such as `preImport` https://github.com/nodejs/loaders/pull/89
 
 After this, we should get user feedback regarding the developer experience; for example, is too much boilerplate required? Should we have a separate `transform` hook? And so on. We should also investigate and potentially implement the [technical improvements](doc/use-cases.md#improvements) on our to-do list.
