@@ -4,6 +4,48 @@ A user loader that defines a hook might need to reimplement all of Node’s orig
 
 These will be added in stages, starting with helpers for the `resolve` hook that cover the various steps that Node’s internal `resolve` performs.
 
+## Usage
+
+The intended usage for these helpers is to eliminate boilerplate within user-defined hooks. For example:
+
+```js
+import { isBareSpecifier, packageResolve } from 'node:module';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
+
+const needsTranspilation = new Set();
+
+export function resolve(specifier, context, next) {
+  if (!isBareSpecifier(specifier)) {
+    return next(specifier, context);
+  }
+
+  const pathToPackage = fileURLToPath(packageResolve(specifier, context.parentURL, context.conditions));
+  const pathToPackageJson = join(pathToPackage, 'package.json');
+  const packageMetadata = JSON.parse(readFileSync(pathToPackageJson, 'utf-8'));
+
+  if (!packageMetadata.exports && packageMetadata.module) {
+    // If this package has a "module" field but no "exports" field,
+    // return the value of "module" and transpile later
+    // within a `load` hook
+    return {
+      url: pathToFileURL(join(pathToPackage, packageMetadata.module))
+    }
+  }
+}
+
+export async function load(url, context, next) {
+  if (!needsTranspilation.has(url)) {
+    return next(url, context);
+  }
+
+  // TODO: Transpile the faux-ESM in the "module" URL
+  // and return the transpiled, runnable ESM source
+}
+```
+
 ## `resolve` helpers
 
 ### `packageResolve`
