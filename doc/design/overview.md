@@ -13,6 +13,8 @@ There are currently [three loader hooks](https://github.com/nodejs/node/tree/mas
 
 * `globalPreload`: Defines a string of JavaScript to be injected into the application global scope.
 
+In order to reduce boilerplate within hooks, new [helper functions](./helpers.md) will be made available.
+
 ## Chaining
 
 Custom loaders are intended to chain to support various concerns beyond the scope of core, such as build tooling, mocking, transpilation, etc.
