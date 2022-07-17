@@ -22,6 +22,10 @@ This team is spun off from the [Modules team](https://github.com/nodejs/modules)
 
 ## Status
 
+### Milestone 1: Parity with CommonJS
+
+Before extending into new frontiers, we need to improve the loaders API enough that users can do just about everything they could do in CommonJS with ESM + loaders.
+
 - [x] Finish https://github.com/nodejs/node/pull/37468 / https://github.com/nodejs/node/pull/35524, simplifying the hooks to `resolve`, `load` and `globalPreloadCode`.
 
 - [x] Refactor the internal Node ESMLoader hooks into `resolve` and `load`. Node’s internal loader already has no-ops for `transformSource` and `getGlobalPreloadCode`, so all this really entails is wrapping the internal `getFormat` and `getSource` with one function `load` (`getFormat` is used internally outside ESMLoader, so they cannot merely be merged). https://github.com/nodejs/node/pull/37468
@@ -30,24 +34,42 @@ This team is spun off from the [Modules team](https://github.com/nodejs/modules)
 
 - [x] Implement chaining as described in the [design](doc/design/proposal-chaining-middleware.md), where the `default<hookName>` becomes `next` and references the next registered hook in the chain. https://github.com/nodejs/node/pull/42623
 
-- [ ] Move loaders off thread
+- [ ] Move loaders off thread.
 
-- [ ] Add helper/utility functions [`module`](https://nodejs.org/api/module.html) module
+   We hope that moving loaders off thread will allow us to preserve an async `resolve` hook while supporting the sync `import.meta.resolve` API. If that turns out to be unachievable, however, then:
 
-   - [ ] Start with the functions that make up the ESM resolution algorithm as defined in the [spec](https://nodejs.org/api/esm.html#resolver-algorithm-specification). Create helper functions for each of the functions defined in that psuedocode: `esmResolve`, `packageImportsResolve`, `packageResolve`, `esmFileFormat`, `packageSelfResolve`, `readPackageJson`, `packageExportsResolve`, `lookupPackageScope`, `packageTargetResolve`, `packageImportsExportsResolve`, `patternKeyCompare`. (Not necessarily all with these exact names, but corresponding to these functions from the spec.)
-   
-   - [ ] Follow up with similar helper functions that make up what happens within Node’s internal `load`. (Definitions to come.)
+   - [ ] Convert `resolve` from async to sync https://github.com/nodejs/node/pull/43363
+
+      - [ ] Add an async `resolve` to [`module`](https://nodejs.org/api/module.html) module
+
+      - [ ] Consider an API for async operations before resolution begins, such as `preImport` https://github.com/nodejs/loaders/pull/89
+
+- [ ] Provide a way to register loaders without a command-line flag, for example via a `"loaders"` field in `package.json`.
 
 - [ ] Support loading source when the return value of `load` has `format: 'commonjs'`. See https://github.com/nodejs/node/issues/34753#issuecomment-735921348 and https://github.com/nodejs/loaders-test/blob/835506a638c6002c1b2d42ab7137db3e7eda53fa/coffeescript-loader/loader.js#L45-L50.
 
+- [ ] Finish and stabilize `--experimental-vm-modules` so that `vm` fully supports ESM.
+
+### Milestone 2: Usability improvements
+
 - [ ] First-class support for [import maps](https://github.com/WICG/import-maps) that doesn’t require a custom loader.
 
-We hope that moving loaders off thread will allow us to preserve an async `resolve` hook while supporting the sync `import.meta.resolve` API. If that turns out to be unachievable, however, then:
+- [ ] Add helper/utility functions to reduce boilerplate in user-defined hooks
 
-- [ ] Convert `resolve` from async to sync https://github.com/nodejs/node/pull/43363
+   - [ ] Start with the functions that make up the ESM resolution algorithm as defined in the [spec](https://nodejs.org/api/esm.html#resolver-algorithm-specification). Create helper functions for each of the functions defined in that psuedocode: `esmResolve`, `packageImportsResolve`, `packageResolve`, `esmFileFormat`, `packageSelfResolve`, `readPackageJson`, `packageExportsResolve`, `lookupPackageScope`, `packageTargetResolve`, `packageImportsExportsResolve`, `patternKeyCompare`. (Not necessarily all with these exact names, but corresponding to these functions from the spec.)
 
-   - [ ] Add an async `resolve` to [`module`](https://nodejs.org/api/module.html) module
-   
-   - [ ] Consider an API for async operations before resolution begins, such as `preImport` https://github.com/nodejs/loaders/pull/89
+   - [ ] Follow up with similar helper functions that make up what happens within Node’s internal `load`. (Definitions to come.)
 
-After this, we should get user feedback regarding the developer experience; for example, is too much boilerplate required? Should we have a separate `transform` hook? And so on. We should also investigate and potentially implement the [technical improvements](doc/use-cases.md#improvements) on our to-do list.
+- [ ] Helper/utility functions to allow access to the CommonJS named exports discovery algorithm (`cjs-module-lexer`).
+
+- [ ] Hooks for customizing the REPL, including transpilation and tab completion. Support users pasting TypeScript (or CoffeeScript or whatever) into the REPL and having just as good an experience as with plain JavaScript.
+
+   - [ ] Support top-level `await` in the REPL, if possible.
+
+- [ ] Hooks for customizing the stack trace (in other words, a hook version of `Error.prepareStackTrace`). This would allow transpiled languages to improve the output.
+
+- [ ] Hooks for customizing filesystem calls, for allowing things like virtual filesystems or archives treated as volumes.
+
+- [ ] Inherit configuration blob to worker threads and child processes.
+
+- [ ] Provide a way for application code to communicate with loaders code.
