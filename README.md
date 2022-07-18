@@ -56,7 +56,7 @@ Before extending into new frontiers, we need to improve the loaders API enough t
 
 - [ ] Add helper/utility functions to reduce boilerplate in user-defined hooks.
 
-   - [ ] Start with a helper for retrieving the closest parent `package.json` associated with a specifier string (`getPackageMetadata` perhaps).
+   - [ ] Start with helpers for retrieving the closest parent `package.json` associated with a specifier string; and for retrieving the `package.json` for a particular package by name (which is not necessarily the same result).
 
    - [ ] Potentially include all the functions that make up the ESM resolution algorithm as defined in the [spec](https://nodejs.org/api/esm.html#resolver-algorithm-specification). Create helper functions for each of the functions defined in that psuedocode: `esmResolve`, `packageImportsResolve`, `packageResolve`, `esmFileFormat`, `packageSelfResolve`, `readPackageJson`, `packageExportsResolve`, `lookupPackageScope`, `packageTargetResolve`, `packageImportsExportsResolve`, `patternKeyCompare`. (Not necessarily all with these exact names, but corresponding to these functions from the spec.)
 
