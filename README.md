@@ -48,15 +48,17 @@ Before extending into new frontiers, we need to improve the loaders API enough t
 
 - [ ] Support loading source when the return value of `load` has `format: 'commonjs'`. See https://github.com/nodejs/node/issues/34753#issuecomment-735921348 and https://github.com/nodejs/loaders-test/blob/835506a638c6002c1b2d42ab7137db3e7eda53fa/coffeescript-loader/loader.js#L45-L50.
 
-- [ ] Finish and stabilize `--experimental-vm-modules` so that `vm` fully supports ESM.
+- [ ] Finish and stabilize `--experimental-vm-modules` so that `node:vm` fully supports ESM.
 
 ### Milestone 2: Usability improvements
 
 - [ ] First-class support for [import maps](https://github.com/WICG/import-maps) that doesn’t require a custom loader.
 
-- [ ] Add helper/utility functions to reduce boilerplate in user-defined hooks
+- [ ] Add helper/utility functions to reduce boilerplate in user-defined hooks.
 
-   - [ ] Start with the functions that make up the ESM resolution algorithm as defined in the [spec](https://nodejs.org/api/esm.html#resolver-algorithm-specification). Create helper functions for each of the functions defined in that psuedocode: `esmResolve`, `packageImportsResolve`, `packageResolve`, `esmFileFormat`, `packageSelfResolve`, `readPackageJson`, `packageExportsResolve`, `lookupPackageScope`, `packageTargetResolve`, `packageImportsExportsResolve`, `patternKeyCompare`. (Not necessarily all with these exact names, but corresponding to these functions from the spec.)
+   - [ ] Start with a helper for retrieving the closest parent `package.json` associated with a specifier string (`getPackageMetadata` perhaps).
+
+   - [ ] Potentially include all the functions that make up the ESM resolution algorithm as defined in the [spec](https://nodejs.org/api/esm.html#resolver-algorithm-specification). Create helper functions for each of the functions defined in that psuedocode: `esmResolve`, `packageImportsResolve`, `packageResolve`, `esmFileFormat`, `packageSelfResolve`, `readPackageJson`, `packageExportsResolve`, `lookupPackageScope`, `packageTargetResolve`, `packageImportsExportsResolve`, `patternKeyCompare`. (Not necessarily all with these exact names, but corresponding to these functions from the spec.)
 
    - [ ] Follow up with similar helper functions that make up what happens within Node’s internal `load`. (Definitions to come.)
 
@@ -64,7 +66,7 @@ Before extending into new frontiers, we need to improve the loaders API enough t
 
 - [ ] Hooks for customizing the REPL, including transpilation and tab completion. Support users pasting TypeScript (or CoffeeScript or whatever) into the REPL and having just as good an experience as with plain JavaScript.
 
-   - [ ] Support top-level `await` in the REPL, if possible.
+   - [ ] Support top-level `await` in the REPL API, if possible.
 
 - [ ] Hooks for customizing the stack trace (in other words, a hook version of `Error.prepareStackTrace`). This would allow transpiled languages to improve the output.
 
