@@ -24,7 +24,7 @@ This team is spun off from the [Modules team](https://github.com/nodejs/modules)
 
 ### Milestone 1: Parity with CommonJS
 
-Before extending into new frontiers, we need to improve the loaders API enough that users can do just about everything they could do in CommonJS with ESM + loaders.
+Before extending into new frontiers, we need to improve the loaders API enough that users can do just about everything they could do in CommonJS with ESM + loaders. (Outside of loaders scope, but related to the goal of parity between CommonJS and ESM, is finishing and stabilizing `--experimental-vm-modules`.)
 
 - [x] Finish https://github.com/nodejs/node/pull/37468 / https://github.com/nodejs/node/pull/35524, simplifying the hooks to `resolve`, `load` and `globalPreloadCode`.
 
@@ -47,8 +47,6 @@ Before extending into new frontiers, we need to improve the loaders API enough t
 - [ ] Provide a way to register loaders without a command-line flag, for example via a `"loaders"` field in `package.json`.
 
 - [ ] Support loading source when the return value of `load` has `format: 'commonjs'`. See https://github.com/nodejs/node/issues/34753#issuecomment-735921348 and https://github.com/nodejs/loaders-test/blob/835506a638c6002c1b2d42ab7137db3e7eda53fa/coffeescript-loader/loader.js#L45-L50.
-
-- [ ] Finish and stabilize `--experimental-vm-modules` so that `node:vm` fully supports ESM.
 
 ### Milestone 2: Usability improvements
 
