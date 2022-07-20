@@ -44,7 +44,7 @@ Before extending into new frontiers, we need to improve the loaders API enough t
 
       - [ ] Consider an API for async operations before resolution begins, such as `preImport` https://github.com/nodejs/loaders/pull/89
 
-- [ ] Provide a way to register loaders without a command-line flag, for example via a `"loaders"` field in `package.json`. https://github.com/nodejs/loaders/issues/98
+- [ ] Provide a way to register loaders without a command-line flag, for example via a `"loaders"` field in `package.json` ([#98](https://github.com/nodejs/loaders/issues/98)).
 
 - [ ] Support loading source when the return value of `load` has `format: 'commonjs'`. See https://github.com/nodejs/node/issues/34753#issuecomment-735921348 and https://github.com/nodejs/loaders-test/blob/835506a638c6002c1b2d42ab7137db3e7eda53fa/coffeescript-loader/loader.js#L45-L50.
 
