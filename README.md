@@ -34,6 +34,8 @@ Before extending into new frontiers, we need to improve the loaders API enough t
 
 - [x] Implement chaining as described in the [design](doc/design/proposal-chaining-middleware.md), where the `default<hookName>` becomes `next` and references the next registered hook in the chain. https://github.com/nodejs/node/pull/42623
 
+- [ ] Have loaders apply to subsequent loaders. https://github.com/nodejs/loaders/blob/main/doc/design/proposal-ambient-loaders.md, https://github.com/nodejs/node/pull/43772
+
 - [ ] Move loaders off thread. https://github.com/nodejs/node/issues/43658
 
    We hope that moving loaders off thread will allow us to preserve an async `resolve` hook while supporting the sync `import.meta.resolve` API. If that turns out to be unachievable, however, then:
