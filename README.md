@@ -36,7 +36,7 @@ Before extending into new frontiers, we need to improve the loaders API enough t
 
 - [ ] Have loaders apply to subsequent loaders. https://github.com/nodejs/loaders/blob/main/doc/design/proposal-ambient-loaders.md, https://github.com/nodejs/node/pull/43772
 
-- [ ] Move loaders off thread. https://github.com/nodejs/node/issues/43658
+- [ ] Move loaders off thread. https://github.com/nodejs/node/issues/43658, https://github.com/nodejs/node/pull/44710
 
    We hope that moving loaders off thread will allow us to preserve an async `resolve` hook while supporting the sync `import.meta.resolve` API. If that turns out to be unachievable, however, then:
 
