@@ -34,7 +34,7 @@ Before extending into new frontiers, we need to improve the loaders API enough t
 
 - [x] Implement chaining as described in the [design](doc/design/proposal-chaining-middleware.md), where the `default<hookName>` becomes `next` and references the next registered hook in the chain. https://github.com/nodejs/node/pull/42623
 
-- [ ] Have loaders apply to subsequent loaders. https://github.com/nodejs/loaders/blob/main/doc/design/proposal-ambient-loaders.md, https://github.com/nodejs/node/pull/43772
+- [x] Have loaders apply to subsequent loaders. https://github.com/nodejs/loaders/blob/main/doc/design/proposal-ambient-loaders.md, https://github.com/nodejs/node/pull/43772
 
 - [ ] Move loaders off thread. https://github.com/nodejs/node/issues/43658, https://github.com/nodejs/node/pull/44710
 
