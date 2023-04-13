@@ -36,19 +36,11 @@ Before extending into new frontiers, we need to improve the loaders API enough t
 
 - [x] Have loaders apply to subsequent loaders. https://github.com/nodejs/loaders/blob/main/doc/design/proposal-ambient-loaders.md, https://github.com/nodejs/node/pull/43772
 
-- [ ] Move loaders off thread. https://github.com/nodejs/node/issues/43658, https://github.com/nodejs/node/pull/44710
-
-   We hope that moving loaders off thread will allow us to preserve an async `resolve` hook while supporting the sync `import.meta.resolve` API. If that turns out to be unachievable, however, then:
-
-   - [ ] Convert `resolve` from async to sync https://github.com/nodejs/node/pull/43363
-
-      - [ ] Add an async `resolve` to [`module`](https://nodejs.org/api/module.html) module
-
-      - [ ] Consider an API for async operations before resolution begins, such as `preImport` https://github.com/nodejs/loaders/pull/89
+- [x] Move loaders off thread. https://github.com/nodejs/node/issues/43658, https://github.com/nodejs/node/pull/44710
 
 ### Milestone 2: Usability improvements
 
-- [ ] Provide a way to register loaders without a command-line flag, for example via a `"loaders"` field in `package.json` ([#98](https://github.com/nodejs/loaders/issues/98) or https://github.com/nodejs/node/pull/43973).
+- [ ] Provide a way to register loaders without a command-line flag, for example via a `"loaders"` field in `package.json`. See https://github.com/nodejs/node/pull/46826, [#98](https://github.com/nodejs/loaders/issues/98), https://github.com/nodejs/node/pull/43973.
 
 - [ ] Support loading source when the return value of `load` has `format: 'commonjs'`. See https://github.com/nodejs/node/issues/34753#issuecomment-735921348 and https://github.com/nodejs/loaders-test/blob/835506a638c6002c1b2d42ab7137db3e7eda53fa/coffeescript-loader/loader.js#L45-L50.
 
