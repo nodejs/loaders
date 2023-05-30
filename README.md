@@ -36,23 +36,17 @@ Before extending into new frontiers, we need to improve the loaders API enough t
 
 - [x] Have loaders apply to subsequent loaders. https://github.com/nodejs/loaders/blob/main/doc/design/proposal-ambient-loaders.md, https://github.com/nodejs/node/pull/43772
 
-- [ ] Move loaders off thread. https://github.com/nodejs/node/issues/43658, https://github.com/nodejs/node/pull/44710
+- [x] Move loaders off thread. https://github.com/nodejs/node/issues/43658, https://github.com/nodejs/node/pull/44710
 
-   We hope that moving loaders off thread will allow us to preserve an async `resolve` hook while supporting the sync `import.meta.resolve` API. If that turns out to be unachievable, however, then:
+### Milestone 2: Stability
 
-   - [ ] Convert `resolve` from async to sync https://github.com/nodejs/node/pull/43363
+- [ ] Provide a way to register loaders from application code, such as `import { register } from 'node:module'`. https://github.com/nodejs/node/pull/46826.
 
-      - [ ] Add an async `resolve` to [`module`](https://nodejs.org/api/module.html) module
+- [ ] Support loading source when the return value of `load` has `format: 'commonjs'`. See https://github.com/nodejs/node/issues/34753#issuecomment-735921348 and https://github.com/nodejs/loaders-test/blob/835506a638c6002c1b2d42ab7137db3e7eda53fa/coffeescript-loader/loader.js#L45-L50. https://github.com/nodejs/node/pull/47999.
 
-      - [ ] Consider an API for async operations before resolution begins, such as `preImport` https://github.com/nodejs/loaders/pull/89
+- [ ] Remove `globalPreload` hook; design a new API to preserve the communications channel from that hook so that we continue to provide a way to communicate between loaders code and application code. See https://github.com/nodejs/loaders/discussions/124#discussioncomment-5735397.
 
-### Milestone 2: Usability improvements
-
-- [ ] Provide a way to register loaders without a command-line flag, for example via a `"nodeOptions"` field in `package.json` ([#98](https://github.com/nodejs/loaders/issues/98) or https://github.com/nodejs/node/pull/43973 or https://github.com/nodejs/node/pull/46534#issuecomment-1420041456).
-
-- [ ] Provide a way to register loaders programmatically, for example `import { registerLoader } from 'module'`.
-
-- [ ] Support loading source when the return value of `load` has `format: 'commonjs'`. See https://github.com/nodejs/node/issues/34753#issuecomment-735921348 and https://github.com/nodejs/loaders-test/blob/835506a638c6002c1b2d42ab7137db3e7eda53fa/coffeescript-loader/loader.js#L45-L50.
+### Milestone 3: Usability improvements
 
 - [ ] First-class support for [import maps](https://github.com/WICG/import-maps) that doesn’t require a custom loader.
 
@@ -75,5 +69,3 @@ Before extending into new frontiers, we need to improve the loaders API enough t
 - [ ] Hooks for customizing filesystem calls, for allowing things like virtual filesystems or archives treated as volumes.
 
 - [ ] Inherit configuration blob to worker threads and child processes.
-
-- [ ] Provide a way for application code to communicate with loaders code.
