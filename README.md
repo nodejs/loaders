@@ -48,7 +48,7 @@ Before extending into new frontiers, we need to improve the loaders API enough t
 
 ### Milestone 3: Usability improvements
 
-- [ ] Provide a way to register loaders via configuration, for example via adding support for `.env` files to Node.js or having `node` read configuration from a new field in `package.json` or other configuration file. See https://github.com/nodejs/node/pull/46826, [#98](https://github.com/nodejs/loaders/issues/98), https://github.com/nodejs/node/pull/43973#issuecomment-1249549346.
+- [ ] Provide a way to register loaders via configuration, for example via adding support for `.env` files to Node.js or having `node` read configuration from a new field in `package.json` or other configuration file. See https://github.com/nodejs/node/pull/46826, [#98](https://github.com/nodejs/loaders/issues/98), https://github.com/nodejs/node/pull/43973#issuecomment-1249549346. https://github.com/nodejs/node/pull/48890.
 
 - [ ] First-class support for [import maps](https://github.com/WICG/import-maps) that doesn’t require a custom loader.
 
