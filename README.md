@@ -44,7 +44,7 @@ Before extending into new frontiers, we need to improve the loaders API enough t
 
 - [x] Replace `globalPreload` hook with new `initialize` hook; update `register` to preserve the communications channel from that hook so that we continue to provide a way to communicate between loaders code and application code. See https://github.com/nodejs/loaders/discussions/124#discussioncomment-5735397 and https://github.com/nodejs/loaders/issues/147. https://github.com/nodejs/node/pull/48842.
 
-- [ ] Remove `globalPreload` hook. https://github.com/nodejs/node/pull/49144.
+- [x] Remove `globalPreload` hook. https://github.com/nodejs/node/pull/49144.
 
 - [x] Support loading source when the return value of `load` has `format: 'commonjs'`. See https://github.com/nodejs/node/issues/34753#issuecomment-735921348 and https://github.com/nodejs/loaders-test/blob/835506a638c6002c1b2d42ab7137db3e7eda53fa/coffeescript-loader/loader.js#L45-L50. https://github.com/nodejs/node/pull/47999.
 
@@ -52,7 +52,7 @@ Before extending into new frontiers, we need to improve the loaders API enough t
 
 ### Milestone 3: Usability improvements
 
-- [ ] Provide a way to register loaders via configuration, for example via adding support for `.env` files to Node.js or having `node` read configuration from a new field in `package.json` or other configuration file. See https://github.com/nodejs/node/pull/46826, [#98](https://github.com/nodejs/loaders/issues/98), https://github.com/nodejs/node/pull/43973#issuecomment-1249549346. https://github.com/nodejs/node/pull/48890.
+- [x] Provide a way to register loaders via configuration, for example via adding support for `.env` files to Node.js or having `node` read configuration from a new field in `package.json` or other configuration file. See https://github.com/nodejs/node/pull/46826, [#98](https://github.com/nodejs/loaders/issues/98), https://github.com/nodejs/node/pull/43973#issuecomment-1249549346. https://github.com/nodejs/node/pull/48890.
 
 - [ ] First-class support for [import maps](https://github.com/WICG/import-maps) that doesn’t require a custom loader.
 
