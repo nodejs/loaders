@@ -54,6 +54,12 @@ Before extending into new frontiers, we need to improve the loaders API enough t
 
 - [x] Provide a way to register loaders via configuration, for example via adding support for `.env` files to Node.js or having `node` read configuration from a new field in `package.json` or other configuration file. See https://github.com/nodejs/node/pull/46826, [#98](https://github.com/nodejs/loaders/issues/98), https://github.com/nodejs/node/pull/43973#issuecomment-1249549346. https://github.com/nodejs/node/pull/48890.
 
+- [ ] Integrated support for external formats.
+
+   - [ ] Phase 1: Support identifying external modules (eg `typescript`); see https://github.com/nodejs/node/pull/49704.
+   - [ ] Phase 2: Support guided remediation via package manager search (eg `npm search … typescript`).
+   - [ ] Phase 3: Automatically configure Node.
+
 - [ ] First-class support for [import maps](https://github.com/WICG/import-maps) that doesn’t require a custom loader.
 
 - [ ] Add helper/utility functions to reduce boilerplate in user-defined hooks.
