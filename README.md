@@ -76,7 +76,7 @@ Before extending into new frontiers, we need to improve the loaders API enough t
 
    - [ ] Support top-level `await` in the REPL API, if possible.
      
-   - [ ] Add support for `--eval` (or `--print`) CLI flags, extending over to support runtime `eval()` as well.
+   - [ ] Add support for `--eval` (or `--print`) CLI flags, extending over to support eval [Worker](https://nodejs.org/api/worker_threads.html) as well.
 
 - [ ] Hooks for customizing the stack trace (in other words, a hook version of `Error.prepareStackTrace`). This would allow transpiled languages to improve the output.
 
