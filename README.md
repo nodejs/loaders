@@ -76,7 +76,7 @@ Before extending into new frontiers, we need to improve the loaders API enough t
 
    - [ ] Support top-level `await` in the REPL API, if possible.
      
-- [ ] Hook for string inputs: `--eval` CLI flag, `Worker` constructor, stdin, etc.
+- [ ] Allow customizing string inputs: `--eval` CLI flag, `Worker` constructor, stdin, etc.
 
 - [ ] Hooks for customizing the stack trace (in other words, a hook version of `Error.prepareStackTrace`). This would allow transpiled languages to improve the output.
 
