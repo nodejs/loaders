@@ -36,7 +36,7 @@ Before extending into new frontiers, we need to improve the loaders API enough t
 
 - [x] Have loaders apply to subsequent loaders. https://github.com/nodejs/loaders/blob/main/doc/design/proposal-ambient-loaders.md, https://github.com/nodejs/node/pull/43772
 
-- [x] Move loaders off thread. https://github.com/nodejs/node/issues/43658, https://github.com/nodejs/node/pull/44710
+- [x] Move loaders off thread. https://github.com/nodejs/modules/issues/351#issuecomment-634347749. https://github.com/nodejs/node/issues/43658, https://github.com/nodejs/node/pull/44710
 
 ### Milestone 2: Stability
 
