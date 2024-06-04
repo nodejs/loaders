@@ -137,7 +137,7 @@ Notes:
 
 ## `exports` (require-only): invoked after execution of the module
 
-This only works for `require()` including `require(esm)`. It manipulates the exports object after execution of the original module completes. If the `exports` returned is not reference equal to the original exports object, it will affect later `module.exports` access in the original module but it does not affect direct `exports.foo` accesses (since the original exports are already passed through the context during module execution). If the module loaded is ESM (`context.format` is `module`) all the direct modification to `exports` are no-ops because ESM namespaces are not mutable. Returning a new `exports` for `require(esm)` is meaningless either - the only thing users can do is to read from the namespace, or to manipulate properties of the exported properties.
+This only runs for `require()` including `require(esm)`. It manipulates the exports object after execution of the original module completes. If the `exports` returned is not reference equal to the original exports object, it will affect later `module.exports` access in the original module but it does not affect direct `exports.foo` accesses (since the original exports are already passed through the context during module execution). If the module loaded is ESM (`context.format` is `module`) all the direct modification to `exports` are no-ops because ESM namespaces are not mutable. Returning a new `exports` for `require(esm)` is meaningless either - the only thing users can do is to read from the namespace, or to manipulate properties of the exported properties.
 
 ```js
 /**
