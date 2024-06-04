@@ -1,6 +1,6 @@
 # Universal, synchronous and in-thread loader hooks
 
-For background and motivation, see https://github.com/nodejs/node/issues/52219
+For background and motivation, see https://github.com/nodejs/node/issues/52219. Prototype implementation is in https://github.com/joyeecheung/node/tree/sync-hooks.
 
 TL;DR: the top priority of this proposal is to allow sun-setting CJS loader monkey patching as non-breakingly as possible (which is why it needs to be synchronous and in-thread because that's how the CJS loader and `require()` works). Then it's API consistency with the existing `module.register()` off-thread hooks.
 
@@ -37,8 +37,9 @@ removeHooks(id);
 1. The names `addHooks` and `removeHooks` take inspiration from pirates. Can be changed to other better names.
 2. An alternative design to remove the hooks could be `addHooks(...).unhook()`, in this case `addHooks()` returns an object that could have other methods.
    1. This may allow third-party hooks to query itself and avoid double-registering. Though this functionality is probably out of scope of the MVP.
-3. It seems useful to allow the results returned by the hooks to be partial i.e. hooks don't have to clone the result returned by the next (default) hook to override it, instead they only need to return an object with properties that they wish to override. This can save the overhead of excessive clones.
-4. It seems `shortCircuit` is not really necessary if hooks can just choose to not call the next hook?
+3. Another alternative design would be like what pirates offer: `const revert = addHooks(..); revert();`.
+4. It seems useful to allow the results returned by the hooks to be partial i.e. hooks don't have to clone the result returned by the next (default) hook to override it, instead they only need to return an object with properties that they wish to override. This can save the overhead of excessive clones.
+5. It seems `shortCircuit` is not really necessary if hooks can just choose to not call the next hook?
 
 ## Hooks
 
@@ -131,7 +132,8 @@ Notes:
 1. `context.format` is only present when the format is already determined by Node.js or a previous hook
 2. It seems useful for the default load to always return a buffer, or add an option to `context` for the default hook to load it as a buffer, in case the resolved file point to a binary file (e.g. a zip file, a wasm, an addon). For the ESM loader it's (almost?) always a buffer. For CJS loader some changes are needed to keep the content in a buffer.
 3. Some changes may be needed in both the CJS and ESM loader to allow loading arbitrary format in a raw buffer in a way that plays well with the internal cache and format detection.
-4. This may allow us to finally deprecate `Module.wrap` properly
+4. This may allow us to finally deprecate `Module.wrap` properly.
+5. It may be useful to provide the computed extension in the context. An important use case is module format override (based on extensions?).
 
 ## `exports` (require-only): invoked after execution of the module
 
