@@ -8,38 +8,35 @@ Existing users of CJS loader monkey patching to look into:
 
 - pirates (used by Babel and nyc)
 - require-in-the-middle (used by many tracing agents)
-- yarn pnp
+- Yarn PnP
 - tsx
 - ts-node
+- proxyquire, quibble, mockery
 
 ## API design
 
 A high-level overview of the API.
 
 ```js
-const { addHooks, removeHooks } = require('module');
+const { registerHooks } = require('module');
 
 function resolve(specifier, context, nextResolve) {
   const resolved = nextResolve(specifier, context);
-  return { url: resolved.url.replaceAll(/foo/g, 'bar'); }
+  resolved.url = resolved.url.replaceAll(/foo/g, 'bar');
+  return resolved;
 }
 
 function load(url, context, nextLoad) {
   const loaded = nextLoad(specifier, context);
-  return { source: loaded.source.toString().replaceAll(/foo/g, 'bar'); }
+  loaded.source = loaded.source.toString().replaceAll(/foo/g, 'bar');
+  return loaded;
 }
 
-// id is a symbol
-const id = addHooks({ resolve, load, ... });
-removeHooks(id);
+const hook = registerHooks({ resolve, load });
+hook.deregister(); // Calls hook[Symbol.dispose]()
 ```
 
-1. The names `addHooks` and `removeHooks` take inspiration from pirates. Can be changed to other better names.
-2. An alternative design to remove the hooks could be `addHooks(...).unhook()`, in this case `addHooks()` returns an object that could have other methods.
-   1. This may allow third-party hooks to query itself and avoid double-registering. Though this functionality is probably out of scope of the MVP.
-3. Another alternative design would be like what pirates offer: `const revert = addHooks(..); revert();`.
-4. It seems useful to allow the results returned by the hooks to be partial i.e. hooks don't have to clone the result returned by the next (default) hook to override it, instead they only need to return an object with properties that they wish to override. This can save the overhead of excessive clones.
-5. It seems `shortCircuit` is not really necessary if hooks can just choose to not call the next hook?
+* The name `registerHooks` and `deregister` can be changed.
 
 ## Hooks
 
@@ -50,13 +47,14 @@ removeHooks(id);
  * @typedef {{
  *   parentURL?: string,
  *   conditions?: string[],
- *   importAttributes?: object[]
+ *   importAttributes?: Record<string, string>,
  * }} ModuleResolveContext
  */
 /**
  * @typedef {{
- *   url?: string,
- *   format?: string
+ *   url: string,,
+ *   format?: string,
+ *   shortCircuit?: boolean
  * }} ModuleResolveResult
  */
 /**
@@ -68,14 +66,15 @@ removeHooks(id);
 function resolve(specifier, context, nextResolve) {
   if (shouldOverride(specifier, context.parentURL)) {
     const url = customResolve(specifier, context.parentURL);
-    return { url };
+    return { url, shortCircuit: true };
   }
 
   const resolved = nextResolve(specifier, context);
   if (resolved.url.endsWith('.zip')) {
-    return { format: 'zip' };
+    resolved.format = 'zip';
+    return resolved;
   }
-  return {};  // no override
+  return resolved;  // no override
 }
 ```
 
@@ -88,6 +87,8 @@ Notes:
    2. Changing CJS modules to be mapped with URL will have performance consequences from but might also help with the hot module replacement use case. Note that for parent packages with `exports` or `imports` in their `package.json` the URL conversion is already done (and not even cached) even in the CJS loader.
 
 ### `load`: from url to source code
+
+When `--experimental-network-import` is enabled, the default `load` step throws an error when encountering network imports. Although, users can implement blocking network imports by spawning a worker and use `Atomics.wait` to wait for the results. An example for doing blocking fetch synchronously can be found [here](https://github.com/addaleax/synchronous-worker?tab=readme-ov-file#how-can-i-avoid-using-this-package).
 
 ```js
 /**
@@ -109,6 +110,8 @@ Notes:
  * @param {(context: ModuleLoadContext) => {ModuleLoadResult}} nextLoad
  * @returns {ModuleLoadResult}
  */
+
+// Mini TypeScript transpiler:
 function load(url, context, nextLoad) {
   const loaded = nextLoad(context);
   const { source: rawSource, format } = loaded;
@@ -117,32 +120,61 @@ function load(url, context, nextLoad) {
       compilerOptions: { module: ts.ModuleKind.NodeNext }
     });
 
-    return {
-      format: 'commonjs',
-      source: transpiled.outputText,
-    };
+    loaded.format = 'commonjs';
+    loaded.source = transpiled.outputText;
+    return loaded;
   }
 
-  return {};
+  return loaded;
 }
 ```
 
 Notes:
 
-1. `context.format` is only present when the format is already determined by Node.js or a previous hook
+1. `context.format` is only present when the format is already determined by Node.js or a previous hook.
 2. It seems useful for the default load to always return a buffer, or add an option to `context` for the default hook to load it as a buffer, in case the resolved file point to a binary file (e.g. a zip file, a wasm, an addon). For the ESM loader it's (almost?) always a buffer. For CJS loader some changes are needed to keep the content in a buffer.
 3. Some changes may be needed in both the CJS and ESM loader to allow loading arbitrary format in a raw buffer in a way that plays well with the internal cache and format detection.
 4. This may allow us to finally deprecate `Module.wrap` properly.
 5. It may be useful to provide the computed extension in the context. An important use case is module format override (based on extensions?).
 
-## `exports` (require-only): invoked after execution of the module
+Example mock of pirates:
 
-This only runs for `require()` including `require(esm)`. It manipulates the exports object after execution of the original module completes. If the `exports` returned is not reference equal to the original exports object, it will affect later `module.exports` access in the original module but it does not affect direct `exports.foo` accesses (since the original exports are already passed through the context during module execution). If the module loaded is ESM (`context.format` is `module`) all the direct modification to `exports` are no-ops because ESM namespaces are not mutable. Returning a new `exports` for `require(esm)` is meaningless either - the only thing users can do is to read from the namespace, or to manipulate properties of the exported properties.
+```js
+function addHook(hook, options) {
+  function load(url, context, nextLoad) {
+    const loaded = nextLoad(url, context);
+    const index = url.lastIndexOf('.');
+    const ext = url.slice(index);
+    if (!options.exts.includes(ext)) {
+      return loaded;
+    }
+    const filename = fileURLToPath(url);
+    if (!options.matcher(filename)) {
+      return loaded;
+    }
+    loaded.source = hook(loaded.source, filename);
+    return loaded;
+  }
+
+  const hook = module.registerHooks({ load });
+
+  return function revert() {
+    hook.deregister();
+  };
+}
+```
+
+## `exports` (require-only): from compiled CJS wrapper to exports object
+
+This only runs for `require()` including `require(esm)`. It can only be meaningfully implemented for modules loaded by `require()`, since for ESM Node.js only gets to control the timing of the evaluation of the root module. The inner module evaluation is currently completely internal to V8. It may be possible to upstream a post-evaluation hook to V8, but calling from C++ to JS would also incur a non-trivial performance cost, especially if it needs to be done for every single module. Also, since the ESM namespace is specified to be immutable, what users can do after ESM evaluation is very limited - they cannot replace anything in the namespace or switch it to a different module. That's why the `link` hook was devised below to better work with the design of ESM (before linking completes it's possible to swap the module resolved by `import` to a different module).
+
+Example mocking require-in-the-middle:
 
 ```js
 /**
  * @typedef {{
- *  format: string
+ *  format: string,
+ *  source: string | Buffer,
  * }} ModuleExportsContext
  */
 /**
@@ -156,8 +188,8 @@ This only runs for `require()` including `require(esm)`. It manipulates the expo
  * @param {(context: ModuleExportsContext) => {ModuleExportsResult}} nextExports
  * @returns {ModuleExportsResult}
  */
-function exports(url, context, nextExports) {  // Mocking require-in-the-middle
-  let { exports: originalExports } = nextExports(url, context);
+function exports(url, context, nextExports) {
+  let exported = nextExports(url, context);
   const stats = getStats(url);
   if (stats.name && modules.includes(stats.name)) {
     const newExports = userCallback(originalExports, stats.name, stats.basedir);
@@ -169,36 +201,26 @@ function exports(url, context, nextExports) {  // Mocking require-in-the-middle
 }
 ```
 
-This can only be meaningfully implemented for modules loaded by `require()`. ESM's design is completely different from CJS in that resolution of the graph and evaluation of the graph are separated, so a similar timing in ESM would be "after module evaluation". However, Node.js only gets to control the timing of the evaluation of the root module. The inner module evaluation is currently completely internal to V8. It may be possible to upstream a post-evaluation hook to V8, but calling from C++ to JS would also incur a non-trivial performance cost, especially if it needs to be done for every single module. Also, since the ESM namespace is specified to be immutable, what users can do after ESM evaluation is very limited - they cannot replace anything in the namespace or switch it to a different module. That's why the `link` hook was devised below to better work with the design of ESM (before linking completes it's possible to swap the module resolved by `import` to a different module).
+If the module loaded is CJS (`context.format` is `"commonjs"`), If the default step is run via `nextExports` run but the `exports` returned later is not reference equal to the original exports object, it will only affect later `module.exports` access in the original module, but does not affect contextual `exports.foo` accesses within the module. There are two options to address this:
 
-### Alternative design: `requires` that encompasses `resolve` and `load`
+1. We allow the default `exports` step to take an optional `context.exports`. If it's configured, it will be used during the wrapper invocation, which unifies the contextual access. Hooks will need to use a proxy if they want the new exports object to be based on the result from default evaluation (since by the time the new overridden exports object is created, the module hasn't been evaluated yet).
+2. We expose the compiled CJS wrapper function in `context` so that users get to invoke it themselves and skip the default `exports` step.
 
-An alternative design would be to span it across the `resolve` and `load` steps - take the specifier as argument, return exports in the result, and rename it to something like `requires()` (to avoid clashing with `require()`). The `nextRequires` hook would for example, invoke the default implementation of `requires` which in turn encompasses `resolve` and `load`. If `nextRequires` is not invoked then the default `resolve` and `load` will be skipped.
+1 may provide better encapsulation, because with 2 would mean that changes to the CJS wrapper function parameters becomes breaking.
 
-```js
-function requires(specifier, context, nextRequires) {  // Mocking require-in-the-middle
-  let { exports: originalExports, url } = nextRequires(specifier, context);
-  const stats = getStats(url);
-  if (stats.name && modules.includes(stats.name)) {
-    const newExports = userCallback(originalExports, stats.name, stats.basedir);
-    return { exports: newExports }
-  }
-  return {
-    exports: originalExports
-  };
-}
-```
+If the module loaded is ESM (`context.format` is `"module"`) all the direct modification to `exports` are no-ops because ESM namespaces are not mutable. Returning a new `exports` for `require(esm)` only affects the caller of `require(esm)`, unless the hook returns a proxy to connect the changes between the new exports object and the module namespace object.
 
-It's not yet investigated whether it is possible to make it work with the CJS loader cache at all, but it looks closer to what developers generally try to monkey-patch the CJS loader for.
+## `link` (import-only): from source code to compiled module records
 
-## `link` (import-only): invoked before linking
+This needs to work with experimental vm modules for passing module instances around.
 
-This is invoked after `load` but prior to Node.js passing the final result to V8 for linking, so it can be composed with `resolve` and `load` if necessary. This needs to work with experimental vm modules for passing module instances around.
+Example mock of import-in-the-middle:
 
 ```js
 /**
  * @typedef {{
- *  source: string | Buffer
+ *  specifier: string,
+ *  source: string | Buffer,
  * }} ModuleLinkContext
  */
 /**
@@ -212,47 +234,98 @@ This is invoked after `load` but prior to Node.js passing the final result to V8
  * @param {(context: ModuleLinkContext) => {ModuleLinkResult}} nextLink
  * @returns {ModuleLinkResult}
  */
-function link(url, context, nextLink) {  // Mocking import-in-the-middle
-  const { module: originalModule } = nextLink(url, context);
-  assert.strictEqual(module.status, 'linked');  // Original module is linked at this point
+function link(url, context, nextLink) {
+  const linked = nextLink(url, context);
+  if (!shouldOverride(url, context.specifier)) {
+    return linked;
+  }
+  assert.strictEqual(linked.module.status, 'linked');  // Original module is linked at this point
   let source = `import * as original from 'original';`;
   source += `import { userCallback, name, basedir } from 'util'`;
   source += `const exported = {}`;
-  for (const key of originalModule.namespace) {
+  for (const key of linked.module.namespace) {
     source += `let $${key} = original.${key};`;
     source += `export { $${key} as ${key} }`;
     source += `Object.defineProperty(exported, '${key}', { get() { return $${key}; }, set (value) { $${key} = value; }});`;
   }
   source += `userCallback(exported, name, basedir);`;
-  const m = vm.SourceTextModule(source);
-  m.linkSync((specifier) => {  // This is not yet implemented but should be trivial to implement.
-    if (specifier === 'original') return originalModule;
+  // This is not yet implemented but should be trivial to implement.
+  linked.module = new vm.SourceTextModuleSync(source, function linkSync(specifier) {
+    if (specifier === 'original') return linked;
     // Contains a synthetic module with userCallback, name & basedir computed from url
     if (specifier === 'util') return util;
   });
-  return { module: m };
+  return linked;
 }
 ```
 
-### Alternative design: `link` that encompasses `resolve` and `load`
+## Invocation order of `resolve` and `load` in ESM
 
-An alternative design would be, instead of invoking a hook after `load`, make it wrap around `resolve` and `load` steps. The `link` hooks would take `specifier` and return `vm.Module` instances. If `nextLink()` is invoked, the next `resolve` and `load` (e.g. the default ones) will be invoked inside that. If `nextLink()` is not invoked, the default `resolve` and `load` will be skipped.
+With synchronous hooks, when overriding loading in a way may take a significant amount of time (for example, involving network access), the module requests are processed sequentially, losing the ability to make processing concurrent with a thread pool or event loop, which was what the design of ESM took care to make possible thanks to the `import` syntax. One trick can be used to start concurrent loading requests in `resolve` before blocking for the results in the `load` hook.
 
 ```js
-function link(specifier, context, nextImport) {  // Mocking import-in-the-middle
-  const { module: originalModule } = nextLink(specifier, context);
-  assert.strictEqual(module.status, 'linked');  // Original module is linked at this point
-  let source = '...';
-  const m = vm.SourceTextModule(source);
-  m.linkSync((specifier) => {
-    // ...
-  });
-  return { module: m };
+function resolve(specifier, context, nextResolve) {
+  const resolved = nextResolve(specifier, context);
+  if (resolved.url.startsWith('http')) {
+    // This adds a fetch request to a pool
+    const syncResponse = startFetch(resolved.url);
+    responseMap.set(url, syncResponse);
+  }
+  return resolved;
+}
+
+function load(url, context, nextLoad) {
+  const syncResponse = responseMap.get(url);
+  if (syncResponse) {
+    const source = syncResponse.wait();
+    return { source, shortCircuit: true };
+  }
+  return nextLoad(url, context);
 }
 ```
 
-## Other use cases that may need some thought
+However, to reuse `resolve` for concurrent loading, we need to implement it to be run in BFS order - that is, for a module like this:
 
-1. Hot module replacement
-2. Source map support (e.g. see [babel-register](https://github.com/babel/babel/blob/07bd0003cbdaa8525279c6dfa84e435471eb5797/packages/babel-register/src/hook.js#L38))
-3. Virtual file system in packaged apps (single executable applications).
+```js
+import 'a';
+import 'b';
+import 'c';
+```
+
+Instead of running the hooks as:
+
+1. `resolve(a)` -> `load(a)` -> `link(a)`
+2. `resolve(b)` -> `load(b)` -> `link(a)`
+3. `resolve(c)` -> `load(c)` -> `link(a)`
+
+We need to run the hook as:
+
+1. `resolve(a)` -> `resolve(b)` -> `resolve(c)` (starts the off-thread fetching requests concurrently)
+2. `load(a)` -> `load(b)` -> `load(c)` (block on the concurrently fetched results)
+3. `link(a)` -> `link(b)` -> `link(c)`
+
+Otherwise, we need to invent another hook that gets run in BFS order before both `resolve` and `load`, but in that case, the hook could only get the specifiers in its arguments, which may or may not be a problem. For network imports it's okay, because the specifiers are supposed to be URLs already, but other forms of concurrent processing (e.g. parallel transpilation with a worker pool) may not be possible without the result of `resolve`.
+
+On the other hand, for CJS we have to run the hooks in DFS order since that's how CJS module requests have to be resolved.
+
+## Child worker/process hook inheritance
+
+Unlike the old `module.register()` design, this new API takes an object with functions so that it's possible to migrate existing monkey-patching packages over. One reason for the `path`/`url` parameter in the `module.register()` and the `initialize` was to aid hook inheritance in child worker and processes. With the new API, we can compose it differently by adding a new API specifically for registering a script that should be preloaded by child workers or processes. Hook authors can either put the call together with the hook registration (so that the inheritance is recursive automatically for grandchildren etc.), or put the hook registration code in a different file and configure a preload of that file.
+
+```js
+process.preloadInChildren(__filename);  // Or `import.meta.filename`
+module.registerHooks({ load });
+```
+
+If the hook doesn't want it to be inherited in child workers or processes, it can opt out by not calling the preload API, or only call it under certain conditions.
+
+## Additional use cases to consider
+
+### Source map support
+
+In most cases, source maps for Node.js apps are consumed externally (e.g. in a client to the inspector protocol) instead of in the Node.js instance that loads the modules, with the notable exception being error stack trace translation, enabled via `--enable-source-maps`. In this case, Node.js loads the source maps from disk using the URLs from the magic comments (currently, some of these are extracted using regular expressions, some are parsed by V8. It was discussed to rely on V8 instead of parsing them ourselves). To allow hooks to customize this behavior, we would need a hook that runs after module parsing and ideally before evaluation (otherwise, if an error is thrown during evaluation, the hook won't be able to run in time to affect the stack traces of the error being thrown). This can be done in the `link` or `exports` hooks proposed above if they take an optional property for source maps in the hook result, and the implementation can put the overriden sourcemap into the internal cache for later source position translations.
+
+### Cache manipulation
+
+It's common for users of existing CJS hooks to wipe the `require.cache` in their tests. Some tools may also update the `require.cache` for use cases like hot module replacement. This should probably be invented as a separate API to manipulate the cache (both the CJS and the ESM one).
+
