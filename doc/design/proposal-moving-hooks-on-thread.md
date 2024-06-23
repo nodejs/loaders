@@ -65,20 +65,25 @@ const httpImportsCache = new Map();
 
 export async function startGraph(specifier, context, nextStartGraph) {
   const { resolve, load } = context;
-  const specifiers = [specifier];
-  while (specifiers.length > 0) {
-    const specifier = specifiers.pop();
-    const { url } = resolve(specifier, context);
-    if (httpImportsCache.has(url)) {
-      continue;
-    }
+  const { url } = resolve(specifier, context);
+  const urls = [url];
+  while (urls.length > 0) {
+    const url = urls.shift();
     if (url.startsWith('https://')) {
       const response = await fetch(url);
       const responseSource = await response.text();
       httpImportsCache.set(url, responseSource);
-      const { source } = load(url, context);
-      httpImportsCache.set(url, source);
-      specifiers.push(...parseAllImportSpecifiersFromSource(source));
+    }
+    // load API constructs context automatically from registry data
+    const { source } = load(url);
+    httpImportsCache.set(url, source);
+    for (const specifier of parseAllImportSpecifiersFromSource(source)) {
+      // resolve API also constructs context automatically from registry data
+      // including determining if the parent is CJS or ESM and setting conditions
+      // correctly. Even when conditions is provided, although explicit import
+      // or require conditions can override this process.
+      const depUrl = resolve(specifier, { parentURL: url });
+      urls.push(depUrl);
     }
   }
   return nextStartGraph(specifier, context);
