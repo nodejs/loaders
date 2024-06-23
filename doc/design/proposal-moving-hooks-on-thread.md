@@ -22,7 +22,7 @@ Once that is achieved, there is one large gap left to fill before we can remove 
 
 ### `startGraph` hook (module graph entry point only)
 
-We would create a new _async_ hook that runs for the main entry point, any worker entry point, and any dynamic `import()`: in other words, before any new module graph is created. This would be an opportunity to do async work that the later sync hooks could have access to, for example to make network calls in a non-blocking way. One of the use cases for this hook is to support network imports, such as the [Import from HTTPS example](https://nodejs.org/api/module.html#import-from-https) in our docs. See [`nodejs/node` #43245](https://github.com/nodejs/node/pull/43245).
+We would create a new _async_ hook that runs for the main entry point, any worker entry point, and any dynamic `import()`: in other words, before any new module graph is created. This hook would delay any further hooks for that module graph operation, until the `startGraph` hook promise has resolved successfully. This provides an opportunity to do async work that the later sync hooks could have access to, for example to make network calls in a non-blocking way. One of the use cases for this hook is to support network imports, such as the [Import from HTTPS example](https://nodejs.org/api/module.html#import-from-https) in our docs. See [`nodejs/node` #43245](https://github.com/nodejs/node/pull/43245).
 
 Because this hook might need to resolve and load the entire module graph to do its work, such as to resolve and fetch HTTPS URLs, it will be provided with the `resolve` and `load` hooks in its `context`. It would also receive `context.entry` to distinguish main/worker entry points from dynamic `import()`. Its signature would be something like:
 
