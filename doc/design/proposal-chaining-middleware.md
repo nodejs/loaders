@@ -263,3 +263,42 @@ export async function load(
 }
 ```
 </details>
+
+## Chaining `readFile` hooks
+
+Say you had a chain of three loaders:
+
+* `zip` adds a virtual filesystem layer for in-zip access
+* `tgz` does the same but for tgz archives
+* `https` allows querying packages through the network
+
+Following the pattern of `--require`:
+
+```console
+node \
+  --loader zip \
+  --loader tgz \
+  --loader https
+```
+
+These would be called in the following sequence: `zip` calls `tgz`, which calls `https`. Or in JavaScript terms, `zip(tgz(https(input)))`:
+
+ReadFile hooks would have the following signature:
+
+```ts
+export async function readFile(
+  url: string,               // A URL pointing to a location; whether the file
+                             // exists or not isn't guaranteed
+  context: {
+    conditions = string[],   // Export conditions of the relevant `package.json`
+  },
+  next: function,            // The subsequent `readFile` hook in the chain,
+                             // or Node’s default `readFile` hook after the
+                             // last user-supplied `readFile` hook
+): {
+  data: string | ArrayBuffer | TypedArray | null, // The content of the
+                             // file, or `null` if it doesn't exist.
+  shortCircuit?: true,       // A signal that this hook intends to terminate
+                             // the chain of `load` hooks
+} {
+```
