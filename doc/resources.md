@@ -22,6 +22,8 @@
 
 * [esmock](https://github.com/iambumblehead/esmock)
 
+* [Hot Hook](https://github.com/Julien-R44/hot-hook): Hot module reload
+
 * [targos/multiloader](https://github.com/targos/multiloader)
 
 * [testdouble.js](https://github.com/testdouble/testdouble.js)
