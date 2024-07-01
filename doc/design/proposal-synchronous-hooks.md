@@ -137,10 +137,11 @@ Notes:
 4. This may allow us to finally deprecate `Module.wrap` properly.
 5. It may be useful to provide the computed extension in the context. An important use case is module format override (based on extensions?).
 
-Example mock of pirates:
+Example migration for Pirates:
 
 ```js
-function addHook(hook, options) {
+// Preserve Pirates’ existing public API where users call `addHook` to register a function
+export function addHook(hook, options) {
   function load(url, context, nextLoad) {
     const loaded = nextLoad(url, context);
     const index = url.lastIndexOf('.');
