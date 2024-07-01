@@ -180,7 +180,8 @@ Example mocking require-in-the-middle:
  */
 /**
  * @typedef {{
-*   exports: any
+*   exports: any,
+*   shortCircuit?: boolean
 * }} ModuleExportsResult
 */
 /**
@@ -226,7 +227,8 @@ Example mock of import-in-the-middle:
  */
 /**
  * @typedef {{
-*   module: vm.Module
+*   module: vm.Module,
+*   shortCircuit?: boolean
 * }} ModuleLinkResult
 */
 /**
