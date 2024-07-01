@@ -100,7 +100,7 @@ When `--experimental-network-import` is enabled, the default `load` step throws 
  */
 /**
  * @typedef {{
-*   format?: string,
+*   format: string,
 *   source: string | Buffer
 * }} ModuleLoadResult
 */
