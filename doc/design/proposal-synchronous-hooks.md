@@ -33,10 +33,10 @@ function load(url, context, nextLoad) {
 }
 
 const hook = registerHooks({ resolve, load });
-hook.deregister(); // Calls hook[Symbol.dispose]()
+hook.deregister();  // Calls [Symbol.dispose](), or the other way around?
 ```
 
-* The name `registerHooks` and `deregister` can be changed.
+* The name `registerHooks` and `deregister` are subject to change.
 
 ## Hooks
 
@@ -82,13 +82,13 @@ Notes:
 
 1. Example use case: yarn pnp ([esm hooks](https://github.com/yarnpkg/berry/blob/master/packages/yarnpkg-pnp/sources/esm-loader/hooks/resolve.ts), [cjs hooks](https://github.com/yarnpkg/berry/blob/master/packages/yarnpkg-pnp/sources/loader/applyPatch.ts))
 2. `importAttributes` are only available when the module request is initiated with `import`.
-3. For the CJS loader, `Module._cache` is keyed using file names, and it's used in the wild (usually in the form of `require.cache`) so changing it to key on URL would be breaking. We'll need to figure out another way to map it with an url.
-   1. It might be non-breaking to maintain an additional map on the side for mapping the same url with different searches and hashes to a different module instance, or leave `Module._cache` as an alias map for the first module instance mapped by the URL minus search/hash. If in the same realm, `Module._cache` gets directly accessed from the outside, we can emit a warning about the incompatibility. Down the road this may require making `Module._cache` a proxy to propagate delete requests to the actual URL-based map.
-   2. Changing CJS modules to be mapped with URL will have performance consequences from but might also help with the hot module replacement use case. Note that for parent packages with `exports` or `imports` in their `package.json` the URL conversion is already done (and not even cached) even in the CJS loader.
+3. For the CJS loader, `Module._cache` is keyed using filenames, and it's used in the wild (usually in the form of `require.cache`) so changing it to key on URL would be breaking. We'll attach a URL to the modules which can be converted to filenames or ids that are the same as their keys in `Module._cache` and use that in the hooks.
 
 ### `load`: from url to source code
 
-When `--experimental-network-import` is enabled, the default `load` step throws an error when encountering network imports. Although, users can implement blocking network imports by spawning a worker and use `Atomics.wait` to wait for the results. An example for doing blocking fetch synchronously can be found [here](https://github.com/addaleax/synchronous-worker?tab=readme-ov-file#how-can-i-avoid-using-this-package).
+Typically `load` is where hook authors might want to implement it asynchronously. In this case they can spawn their own worker and use `Atomics.wait()`  the hooks are synchronous, which has already been done by `module.register()`'s off-thread hooks anyway, and this new API is just giving the control/choice back to the hook authors. An example for doing blocking fetch synchronously using workers can be found [here](https://github.com/addaleax/synchronous-worker?tab=readme-ov-file#how-can-i-avoid-using-this-package).
+
+When the hooks only access the file system and do not access the network, it is recommended to just use the synchronous FS APIs, which has lower overhead compared to the asynchronous versions.
 
 ```js
 /**
@@ -132,15 +132,14 @@ function load(url, context, nextLoad) {
 Notes:
 
 1. `context.format` is only present when the format is already determined by Node.js or a previous hook.
-2. It seems useful for the default load to always return a buffer, or add an option to `context` for the default hook to load it as a buffer, in case the resolved file point to a binary file (e.g. a zip file, a wasm, an addon). For the ESM loader it's (almost?) always a buffer. For CJS loader some changes are needed to keep the content in a buffer.
-3. Some changes may be needed in both the CJS and ESM loader to allow loading arbitrary format in a raw buffer in a way that plays well with the internal cache and format detection.
-4. This may allow us to finally deprecate `Module.wrap` properly.
-5. It may be useful to provide the computed extension in the context. An important use case is module format override (based on extensions?).
+2. It seems useful for the default load to always return a buffer, or add an option to `context` for the default hook to load it as a buffer, in case the resolved file point to a binary file (e.g. a zip file, a wasm, an addon). For the ESM loader it's (almost?) always a buffer. For CJS loader some changes are needed to keep the content in a buffer. For now users need to assume that the source could be either string or a buffer and need to handle both, this is also the case for existing `module.register()` hooks.
+3. This may allow us to finally deprecate `Module.wrap` properly.
+4. It may be useful to provide the computed extension in the context. An important use case is module format override (based on extensions?)
 
-Example migration for Pirates:
+Example migration for the pirates package:
 
 ```js
-// Preserve Pirates’ existing public API where users call `addHook` to register a function
+// Preserve pirates’ existing public API where users call `addHook` to register a function
 export function addHook(hook, options) {
   function load(url, context, nextLoad) {
     const loaded = nextLoad(url, context);
@@ -175,7 +174,7 @@ Example mocking require-in-the-middle:
 /**
  * @typedef {{
  *  format: string,
- *  source: string | Buffer,
+ *  module: module.Module
  * }} ModuleExportsContext
  */
 /**
@@ -212,9 +211,11 @@ If the module loaded is CJS (`context.format` is `"commonjs"`), If the default s
 
 If the module loaded is ESM (`context.format` is `"module"`) all the direct modification to `exports` are no-ops because ESM namespaces are not mutable. Returning a new `exports` for `require(esm)` only affects the caller of `require(esm)`, unless the hook returns a proxy to connect the changes between the new exports object and the module namespace object.
 
-## `link` (import-only): from source code to compiled module records
+## `instantiate` (import-only): from compiled ES modules to instantiated ES modules (with dependency resolved)
 
-This needs to work with experimental vm modules for passing module instances around.
+Previously with only the `load` hooks for overriding module behavior, hooks typically have to parse the provided source again to understand the exports, which can be both slow and prone to bugs. `instantiate` gives the hooks an opportunity to override module behavior using the export names parsed by V8 and perform customization before the the compiled code gets evaluated. For ESM, it needs to work with experimental vm modules for passing customized module instances around.
+
+TODO(joyeecheung): we may consider exposing `compile` (source code to compiled modules) too, which happens before `instantiate` and can be overloaded for CJS as well. The `instantiate` hook has to be separate because merely compiling the modules is not enough for V8 to provide the export names. V8 requires the `import` dependencies to be resolved before it can return the namespace, since there might be `export * from '...'` coming from the dependencies.
 
 Example mock of import-in-the-middle:
 
@@ -222,45 +223,51 @@ Example mock of import-in-the-middle:
 /**
  * @typedef {{
  *  specifier: string,
- *  source: string | Buffer,
- * }} ModuleLinkContext
+ *  module: vm.Module,
+ * }} ModuleInstantiateContext
+ * ModuleWrap can be too internal to be exposed. We'll need to wrap it with a more public
+ * type before passing it to users. However, users should not expect the wrapper to own
+ * the ModuleWrap/V8 module records or use this for memory management.
  */
 /**
  * @typedef {{
-*   module: vm.Module,
+*   module?: vm.Module,
 *   shortCircuit?: boolean
-* }} ModuleLinkResult
+* }} ModuleInstantiateResult
 */
 /**
  * @param {string} url
- * @param {ModuleLinkContext} context
- * @param {(context: ModuleLinkContext) => {ModuleLinkResult}} nextLink
- * @returns {ModuleLinkResult}
+ * @param {ModuleInstantiateContext} context
+ * @param {(context: ModuleInstantiateContext) => {ModuleInstantiateResult}} nextInstantiate
+ * @returns {ModuleInstantiateResult}
  */
-function link(url, context, nextLink) {
-  const linked = nextLink(url, context);
-  if (!shouldOverride(url, context.specifier)) {
-    return linked;
+function instantiate(url, context, nextInstantiate) {
+  const instantiated = nextInstantiate(url, context);
+  if (!instantiated.module || !shouldOverride(url, context.specifier)) {  // Only overrides ESM.
+    return instantiated;
   }
-  assert.strictEqual(linked.module.status, 'linked');  // Original module is linked at this point
+  assert.strictEqual(instantiated.module.status, 'instantiated');  // Original module has resolved its dependencies at this point
   let source = `import * as original from 'original';`;
   source += `import { userCallback, name, basedir } from 'util'`;
   source += `const exported = {}`;
-  for (const key of linked.module.namespace) {
+  for (const key of instantiated.module.namespace) {  // Note how instantiated.module.namespace is the real exports parsed by V8.
     source += `let $${key} = original.${key};`;
     source += `export { $${key} as ${key} }`;
     source += `Object.defineProperty(exported, '${key}', { get() { return $${key}; }, set (value) { $${key} = value; }});`;
   }
   source += `userCallback(exported, name, basedir);`;
   // This is not yet implemented but should be trivial to implement.
-  linked.module = new vm.SourceTextModuleSync(source, function linkSync(specifier) {
-    if (specifier === 'original') return linked;
+  instantiated.module = new vm.SourceTextModuleSync(source, function linkSync(specifier) {
+    if (specifier === 'original') return instantiated;
     // Contains a synthetic module with userCallback, name & basedir computed from url
     if (specifier === 'util') return util;
   });
-  return linked;
+  assert.strictEqual(instantiated.module.status, 'instantiated');
+  return instantiated;
 }
 ```
+
+Alternatively, for overriding the compiled module instance with a `SourceTextModule` that doesn't have additional dependencies itself, we can assume that if `result.module` is a string for a `SourceTextModule` that needs to be recompiled using the original configurations, and perform the recompilation without requiring users to use `vm.SourceTextModule`.
 
 ## Invocation order of `resolve` and `load` in ESM
 
@@ -311,16 +318,27 @@ Otherwise, we need to invent another hook that gets run in BFS order before both
 
 On the other hand, for CJS we have to run the hooks in DFS order since that's how CJS module requests have to be resolved.
 
-## Child worker/process hook inheritance
+## The API takes functions directly, delegating worker inheritance to another API
 
-Unlike the old `module.register()` design, this new API takes an object with functions so that it's possible to migrate existing monkey-patching packages over. One reason for the `path`/`url` parameter in the `module.register()` and the `initialize` was to aid hook inheritance in child worker and processes. With the new API, we can compose it differently by adding a new API specifically for registering a script that should be preloaded by child workers or processes. Hook authors can either put the call together with the hook registration (so that the inheritance is recursive automatically for grandchildren etc.), or put the hook registration code in a different file and configure a preload of that file.
+Unlike the old `module.register()` design, this new API takes an object with functions so that it's possible to migrate existing monkey-patching packages over, for several reasons:
 
-```js
-process.preloadInChildren(__filename);  // Or `import.meta.filename`
-module.registerHooks({ load });
-```
+1. It's unclear how an API that takes a `specifier` & `parentURL` combination should resolve the request in a universal manner - `module.register()` simply reuses the `import` resolution which is assuming too much for universal hooks e.g. `import` conditions in `package.json` would be used over other conditions, which can be surprising if the hooks are supposed to be `require()`-ed. ESM resolution is deliberately different from CJS resolution, so choosing either of them or trying to invent a new resolution rule adds unnecessary quirks to the API, it's better to just leave the choice to users.
+2. The purpose of the `specifier` & `parentURL` combination in `module.register()` was to help child worker inherit the hooks. In practice, however, inheriting the module request pointed by the registration API alone is not necessarily enough for the entire customization to work. For example, in a typical `instrumentation.js` -> `@opentelemetry/instrumentation` -> `import-in-the-middle` -> `import-in-the-middle/hook.mjs` customization dependency chain, only automatically preloading `import-in-the-middle/hook.mjs` doesn't complete customization for workers if the higher-level code don't get preloaded too. In the end the high-level code would still need a way to register themselves as preloads for child workers, making the inheritance of the low-level hooks alone redundant.
 
-If the hook doesn't want it to be inherited in child workers or processes, it can opt out by not calling the preload API, or only call it under certain conditions.
+So this new API will simply take the functions directly and delegate the worker inheritance/preload registration to a separate API. Currently, existing hooks users have been using `--require`/`--import` and the `process.execArgv` inheritance in workers to deal with registration of the entire customization, and this will continue to work with the new API. In the future we can explore a few other options:
+
+1. A file-based configuration to specify preloads that are automatically discovered by Node.js upon startup. See [the `noderc` proposal](https://github.com/nodejs/node/issues/53787).
+2. A JavaScript API to register preloads in child workers. For example:
+
+    ```js
+    // As if `require(require.resolve(specifier, { paths: require.resolve.paths(base) }))`
+    // is used to preload the file.
+    process.requireInChildren(specifier, base);
+    // As if import(new URL(specifier, parentURL)) is used to preload the file.
+    process.importInChildren(specifier, parentURL);
+    ```
+
+ This API is supposed to be invoked by final customizations or end user code, or intermediate dependency that wish to spawn a worker with different preloads, because only they have access to the entire graph of the customizations that should be inherited into the workers. For example, in the case of a typical open-telemetry user, the file being preloaded should be their `instrumentation.js`. We could also add accompanying APIs for removing/querying preloads.
 
 ## Additional use cases to consider
 
@@ -332,3 +350,6 @@ In most cases, source maps for Node.js apps are consumed externally (e.g. in a c
 
 It's common for users of existing CJS hooks to wipe the `require.cache` in their tests. Some tools may also update the `require.cache` for use cases like hot module replacement. This should probably be invented as a separate API to manipulate the cache (both the CJS and the ESM one).
 
+### Locking the module hooks
+
+To prevent accidental mistakes or to aid analysis of the dependency, it may be helpful to provide an API that stops further module hook registration after its invocation.
