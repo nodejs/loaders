@@ -32,6 +32,8 @@
 
 * [yarn PnP](https://github.com/yarnpkg/berry/pull/2161)
 
+* [dredge](https://github.com/bojavou/dredge): Import tracer
+
 ## Tracking by Other Projects
 
 * [Fastify](https://github.com/fastify/fastify/issues/2847)
