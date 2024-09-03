@@ -46,11 +46,11 @@ Compared to regular CLI flags, a structured representation of the configuration 
 ```json
 {
   "schema": 0,
-  "import": [ { "specifier": "./monitor.js", "mainThreadOnly": false } ]
+  "import": [ { "specifier": "./monitor.js", "main-thread-only": false } ]
 }
 ```
 
-It also allows nicer-looking sub-configurations without repeating the prefix required by CLI flags, for example:
+The general naming convention of the configuration keys are snake-cased version of corresponding CLI flags (if any) without the `--` prefix, or lower-cased version of corresponding environment variables (if any). This allows easier conversions. Exceptions include configurations that are grouped by common prefixes, for example:
 
 ```json
 {
@@ -61,6 +61,21 @@ It also allows nicer-looking sub-configurations without repeating the prefix req
   }
 }
 ```
+
+### Escape hatches for environment variables and CLI flags
+
+While the configuration file is intended as a structural representation for configurations that are easier to extend/reuse, we support escape hatches to define environment variables or CLI flags via `env-file`, `exec-args`, and possibly `v8-args` (or `js-args`, to follow Chromium):
+
+```json
+{
+  "schema": 0,
+  "env-file": "./.env.local",
+  "exec-args": [ "--title=test" ],
+  "v8-args": [ "--max-old-space-size=100" ]
+}
+```
+
+Open question: when both the escape hatches and the structural representations are specified, which one should take precedence?
 
 ### Overriding the noderc file being applied
 
