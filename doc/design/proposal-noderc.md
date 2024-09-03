@@ -69,7 +69,7 @@ While the configuration file is intended as a structural representation for conf
 ```json
 {
   "schema": 0,
-  "env-file": "./.env.local",
+  "env-file": [ "./.env.local" ],
   "exec-args": [ "--title=test" ],
   "v8-args": [ "--max-old-space-size=100" ]
 }
@@ -130,6 +130,8 @@ In addition, there can be another `./.noderc.prod.json` extending it for startin
   "import": [ "./monitor.ts" ]
 }
 ```
+
+If the configuration being extended doesn't have the same schema as the one extending it, initially an error would be thrown. Though we could also consider allowing conversions on a per-file basis and merging multiple configurations in future iterations, depending on how stable the schemas are.
 
 Open question: how should we handle override v.s. concatenation? Should we invent a special syntax? For example, to concatenate, use `"+import"`, otherwise, use `"import"`? Or is that too cryptic and we should just do "override if it's not an array, concatenate if it's an array?"
 
