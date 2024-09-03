@@ -1,0 +1,16 @@
+{
+  "name": "multi-config",
+  "version": "1.0.0",
+  "noderc": {
+    "dev": "./.noderc.dev.json",
+    "prod": "./.noderc.prod.json",
+    "test": "./.noderc.test.json",
+    "test:coverage": "./.noderc.test.coverage.json"
+  },
+  "scripts": {
+    "dev": "node --watch ./app.ts",
+    "prod": "node ./app.ts",
+    "test": "node --test",
+    "test:coverage": "node --test"
+  }
+}
