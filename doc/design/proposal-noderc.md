@@ -64,11 +64,14 @@ The general naming convention of the configuration keys are snake-cased version 
 
 ### Escape hatches for environment variables and CLI flags
 
-While the configuration file is intended as a structural representation for configurations that are easier to extend/reuse, we support escape hatches to define environment variables or CLI flags via `env-file`, `exec-args`, and possibly `v8-args` (or `js-args`, to follow Chromium):
+While the configuration file is intended as a structural representation for configurations that are easier to extend/reuse, we can also support escape hatches to define environment variables or CLI flags via `env`, `env-file`, `exec-args`, and possibly `v8-args` (or `js-args`, to follow Chromium):
 
 ```json
 {
   "schema": 0,
+  "env": {
+    "FOO": "BAR"
+  },
   "env-file": [ "./.env.local" ],
   "exec-args": [ "--title=test" ],
   "v8-args": [ "--max-old-space-size=100" ]
