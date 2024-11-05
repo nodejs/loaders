@@ -1,0 +1,5 @@
+{
+  "schema": 0,
+  "extends": [ "./.noderc.json" ],
+  "import": [ "./monitor.ts" ]
+}
