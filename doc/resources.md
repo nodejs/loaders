@@ -28,9 +28,17 @@
 
 * [testdouble.js](https://github.com/testdouble/testdouble.js)
 
-* [ts-node](https://typestrong.org/ts-node) ([Loader-specific discussion](https://github.com/TypeStrong/ts-node/issues/1007))
+* [ts-node](https://typestrong.org/ts-node) ([Loader-specific discussion](https://github.com/TypeStrong/ts-node/issues/1007)) - built on top of `esbuild`
 
 * [yarn PnP](https://github.com/yarnpkg/berry/pull/2161)
+
+* [JakobJingleheimer/nodejs-loaders](https://github.com/JakobJingleheimer/nodejs-loaders) - A collection of loaders to facilitate a quick and easy local development and CI testing environment.
+
+* [MDX loader](https://mdxjs.com/packages/node-loader/)
+
+* [@swc-node/register](https://github.com/swc-project/swc-node/tree/master/packages/register#swc-noderegister)
+
+* [nodejs/amaro](https://github.com/nodejs/amaro)
 
 ## Tracking by Other Projects
 
