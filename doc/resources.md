@@ -32,13 +32,15 @@
 
 * [yarn PnP](https://github.com/yarnpkg/berry/pull/2161)
 
-* [JakobJingleheimer/nodejs-loaders](https://github.com/JakobJingleheimer/nodejs-loaders) - A collection of loaders to facilitate a quick and easy local development and CI testing environment.
+* [nodejs-loaders/nodejs-loaders](https://github.com/JakobJingleheimer/nodejs-loaders) - A collection of loaders to facilitate a quick and easy local development and CI testing environment.
 
 * [MDX loader](https://mdxjs.com/packages/node-loader/)
 
 * [@swc-node/register](https://github.com/swc-project/swc-node/tree/master/packages/register#swc-noderegister)
 
-* [nodejs/amaro](https://github.com/nodejs/amaro)
+* [nodejs/amaro](https://github.com/nodejs/amaro) - Node.js TypeScript wrapper
+
+* [Aurelia loader](https://github.com/aurelia/loader-nodejs) - A loader for Aurelia (front-end framework)
 
 ## Tracking by Other Projects
 
