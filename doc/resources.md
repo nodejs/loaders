@@ -32,7 +32,7 @@
 
 * [yarn PnP](https://github.com/yarnpkg/berry/pull/2161)
 
-* [nodejs-loaders/nodejs-loaders](https://github.com/JakobJingleheimer/nodejs-loaders) - A collection of loaders to facilitate a quick and easy local development and CI testing environment.
+* [@nodejs-loaders](https://github.com/nodejs-loaders/nodejs-loaders) - A collection of loaders to facilitate a quick and easy local development and CI testing environment.
 
 * [MDX loader](https://mdxjs.com/packages/node-loader/)
 
