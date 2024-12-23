@@ -16,6 +16,12 @@
 
 * [@istanbuljs/esm-loader-hook](https://github.com/istanbuljs/esm-loader-hook)
 
+* [@nodejs-loaders](https://github.com/nodejs-loaders/nodejs-loaders) - A collection of loaders to facilitate a quick and easy local development and CI testing environment.
+
+* [@swc-node/register](https://github.com/swc-project/swc-node/tree/master/packages/register#swc-noderegister)
+
+* [Aurelia loader](https://github.com/aurelia/loader-nodejs) - A loader for Aurelia (front-end framework)
+
 * [babel-register-esm](https://github.com/giltayar/babel-register-esm)
 
 * [create-esm-loader](https://github.com/sebamarynissen/create-esm-loader#readme) and [node-esm-loader](https://github.com/sebamarynissen/node-esm-loader#readme), along with [several compatible loaders](https://github.com/brev/esm-loaders#readme) (typescript, svelte, css, mocking, etc)
@@ -24,6 +30,10 @@
 
 * [Hot Hook](https://github.com/Julien-R44/hot-hook): Hot module reload
 
+* [MDX loader](https://mdxjs.com/packages/node-loader/)
+
+* [nodejs/amaro](https://github.com/nodejs/amaro) - Node.js TypeScript wrapper
+
 * [targos/multiloader](https://github.com/targos/multiloader)
 
 * [testdouble.js](https://github.com/testdouble/testdouble.js)
@@ -31,16 +41,6 @@
 * [ts-node](https://typestrong.org/ts-node) ([Loader-specific discussion](https://github.com/TypeStrong/ts-node/issues/1007)) - built on top of `esbuild`
 
 * [yarn PnP](https://github.com/yarnpkg/berry/pull/2161)
-
-* [@nodejs-loaders](https://github.com/nodejs-loaders/nodejs-loaders) - A collection of loaders to facilitate a quick and easy local development and CI testing environment.
-
-* [MDX loader](https://mdxjs.com/packages/node-loader/)
-
-* [@swc-node/register](https://github.com/swc-project/swc-node/tree/master/packages/register#swc-noderegister)
-
-* [nodejs/amaro](https://github.com/nodejs/amaro) - Node.js TypeScript wrapper
-
-* [Aurelia loader](https://github.com/aurelia/loader-nodejs) - A loader for Aurelia (front-end framework)
 
 ## Tracking by Other Projects
 
