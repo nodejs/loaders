@@ -8,6 +8,8 @@
 
 * [Gil Tayar: Mock all you want: supporting ES modules in the Testdouble.js mocking library](https://dev.to/giltayar/mock-all-you-want-supporting-es-modules-in-the-testdouble-js-mocking-library-3gh1)
 
+* [How to use Node.js ESM loader](https://augustinmauroy.github.io/en/blog/post/how-to-use-nodejs-loader)
+
 ## Prior Art
 
 * [Early chained loaders PR](https://github.com/nodejs/node/pull/33812)
@@ -20,8 +22,6 @@
 
 * [@swc-node/register](https://github.com/swc-project/swc-node/tree/master/packages/register#swc-noderegister)
 
-* [Aurelia loader](https://github.com/aurelia/loader-nodejs) - A loader for Aurelia (front-end framework)
-
 * [babel-register-esm](https://github.com/giltayar/babel-register-esm)
 
 * [create-esm-loader](https://github.com/sebamarynissen/create-esm-loader#readme) and [node-esm-loader](https://github.com/sebamarynissen/node-esm-loader#readme), along with [several compatible loaders](https://github.com/brev/esm-loaders#readme) (typescript, svelte, css, mocking, etc)
@@ -30,15 +30,15 @@
 
 * [Hot Hook](https://github.com/Julien-R44/hot-hook): Hot module reload
 
-* [MDX loader](https://mdxjs.com/packages/node-loader/)
+* [MDX loader](https://mdxjs.com/packages/node-loader/): Official MDX loader
 
 * [nodejs/amaro](https://github.com/nodejs/amaro) - Node.js TypeScript wrapper
 
-* [targos/multiloader](https://github.com/targos/multiloader)
+* [targos/multiloader](https://github.com/targos/multiloader) _not maintained_
 
 * [testdouble.js](https://github.com/testdouble/testdouble.js)
 
-* [ts-node](https://typestrong.org/ts-node) ([Loader-specific discussion](https://github.com/TypeStrong/ts-node/issues/1007)) - built on top of `esbuild`
+* [ts-node](https://typestrong.org/ts-node) ([Loader-specific discussion](https://github.com/TypeStrong/ts-node/issues/1007))
 
 * [yarn PnP](https://github.com/yarnpkg/berry/pull/2161)
 
