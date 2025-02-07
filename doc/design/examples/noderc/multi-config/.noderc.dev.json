@@ -1,0 +1,7 @@
+{
+  "schema": 0,
+  "extends": [ "./.noderc.json" ],
+  "watch": {
+    "path": [ "./src", "./app.ts" ]
+  }
+}

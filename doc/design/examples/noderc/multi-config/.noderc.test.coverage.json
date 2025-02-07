@@ -1,0 +1,9 @@
+{
+  "schema": 0,
+  "extends": [ "./.noderc.json" ],
+  "test": {
+    "reporter": "lcov",
+    "reporter-destination": "./lcov.info",
+    "coverage": true
+  }
+}
